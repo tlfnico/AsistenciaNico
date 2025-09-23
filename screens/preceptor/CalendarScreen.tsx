@@ -116,7 +116,7 @@ const EventModal: React.FC<{ event: Partial<CalendarEvent> | null, onClose: () =
                         {event?.id && <Button variant="danger" onClick={handleDelete}><Icon name="delete" /></Button>}
                     </div>
                     <div className="flex gap-2">
-                        <Button variant="secondary" onClick={onClose}>Cancelar</button>
+                        <Button variant="secondary" onClick={onClose}>Cancelar</Button>
                         <Button onClick={handleSubmit}>Guardar</Button>
                     </div>
                 </div>
