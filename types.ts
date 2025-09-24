@@ -75,3 +75,10 @@ export interface CalendarEvent {
     type: CalendarEventType;
     description: string;
 }
+
+export interface Note {
+    id: string;
+    userId: string;
+    text: string;
+    lastUpdated: string;
+}

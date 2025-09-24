@@ -1,4 +1,4 @@
-import { Student, Preceptor, UserRole, AttendanceRecord, AttendanceStatus, Notification, NotificationCategory, Message, Conversation, CalendarEvent, CalendarEventType, User } from '../types';
+import { Student, Preceptor, UserRole, AttendanceRecord, AttendanceStatus, Notification, NotificationCategory, Message, Conversation, CalendarEvent, CalendarEventType, User, Note } from '../types';
 
 export const students: Student[] = [
     { id: 's1', name: 'Juan Perez', email: 'juan.perez@email.com', role: UserRole.STUDENT, dni: '12345678', careers: ['Ingeniería en Sistemas', 'Licenciatura en Física'], year: 3 },
@@ -7,6 +7,25 @@ export const students: Student[] = [
     { id: 's4', name: 'Lucia Fernandez', email: 'lucia.fernandez@email.com', role: UserRole.STUDENT, dni: '55667788', careers: ['Ingeniería en Sistemas'], year: 3 },
     { id: 's5', name: 'Pedro Rodriguez', email: 'pedro.rodriguez@email.com', role: UserRole.STUDENT, dni: '99887766', careers: ['Licenciatura en Administración'], year: 1 },
     { id: 's6', name: 'Ana Gomez', email: 'ana.gomez@email.com', role: UserRole.STUDENT, dni: '12312312', careers: ['Licenciatura en Administración'], year: 1 },
+    // More students for testing
+    { id: 's7', name: 'Laura Torres', email: 'laura.torres@email.com', role: UserRole.STUDENT, dni: '23456789', careers: ['Ingeniería en Sistemas'], year: 3 },
+    { id: 's8', name: 'Marcos Vega', email: 'marcos.vega@email.com', role: UserRole.STUDENT, dni: '34567890', careers: ['Ingeniería en Sistemas'], year: 3 },
+    { id: 's9', name: 'Sofia Castro', email: 'sofia.castro@email.com', role: UserRole.STUDENT, dni: '45678901', careers: ['Ingeniería Química'], year: 2 },
+    { id: 's10', name: 'David Romero', email: 'david.romero@email.com', role: UserRole.STUDENT, dni: '56789012', careers: ['Ingeniería Química'], year: 2 },
+    { id: 's11', name: 'Paula Nuñez', email: 'paula.nunez@email.com', role: UserRole.STUDENT, dni: '67890123', careers: ['Ingeniería Química'], year: 2 },
+    { id: 's12', name: 'Martin Suarez', email: 'martin.suarez@email.com', role: UserRole.STUDENT, dni: '78901234', careers: ['Licenciatura en Administración'], year: 1 },
+    { id: 's13', name: 'Valentina Rojas', email: 'valentina.rojas@email.com', role: UserRole.STUDENT, dni: '89012345', careers: ['Licenciatura en Administración'], year: 1 },
+    { id: 's14', name: 'Diego Medina', email: 'diego.medina@email.com', role: UserRole.STUDENT, dni: '90123456', careers: ['Licenciatura en Administración'], year: 1 },
+    { id: 's15', name: 'Camila Rios', email: 'camila.rios@email.com', role: UserRole.STUDENT, dni: '11122233', careers: ['Ingeniería en Sistemas'], year: 2 },
+    { id: 's16', name: 'Bruno Acosta', email: 'bruno.acosta@email.com', role: UserRole.STUDENT, dni: '22233344', careers: ['Ingeniería en Sistemas'], year: 2 },
+    { id: 's17', name: 'Valeria Benitez', email: 'valeria.benitez@email.com', role: UserRole.STUDENT, dni: '33344455', careers: ['Ingeniería en Sistemas'], year: 1 },
+    { id: 's18', name: 'Nicolas Gimenez', email: 'nicolas.gimenez@email.com', role: UserRole.STUDENT, dni: '44455566', careers: ['Ingeniería en Sistemas'], year: 1 },
+    { id: 's19', name: 'Julieta Vazquez', email: 'julieta.vazquez@email.com', role: UserRole.STUDENT, dni: '55566677', careers: ['Ingeniería en Sistemas'], year: 1 },
+    { id: 's20', name: 'Mateo Castillo', email: 'mateo.castillo@email.com', role: UserRole.STUDENT, dni: '66677788', careers: ['Ingeniería en Sistemas'], year: 2 },
+    { id: 's21', name: 'Isabella Morales', email: 'isabella.morales@email.com', role: UserRole.STUDENT, dni: '77788899', careers: ['Ingeniería Química'], year: 1 },
+    { id: 's22', name: 'Santiago Molina', email: 'santiago.molina@email.com', role: UserRole.STUDENT, dni: '88899900', careers: ['Ingeniería Química'], year: 1 },
+    { id: 's23', name: 'Renata Ortega', email: 'renata.ortega@email.com', role: UserRole.STUDENT, dni: '99900011', careers: ['Licenciatura en Administración'], year: 2 },
+    { id: 's24', name: 'Lucas Paredes', email: 'lucas.paredes@email.com', role: UserRole.STUDENT, dni: '00011122', careers: ['Licenciatura en Física'], year: 3 },
 ];
 
 export const preceptors: Preceptor[] = [
@@ -66,6 +85,57 @@ export let attendanceRecords: AttendanceRecord[] = [
     { id: 'a8', studentId: 's4', date: '2024-07-22', subject: 'Análisis Matemático III', status: AttendanceStatus.PRESENT },
     { id: 'a9', studentId: 's5', date: '2024-07-22', subject: 'Introducción a la Administración', status: AttendanceStatus.ABSENT },
     { id: 'a10', studentId: 's6', date: '2024-07-22', subject: 'Introducción a la Administración', status: AttendanceStatus.LATE },
+    
+    // Attendance for new students
+    // Laura Torres (s7) - Análisis Matemático III
+    { id: 'a31', studentId: 's7', date: '2024-07-20', subject: 'Análisis Matemático III', status: AttendanceStatus.PRESENT },
+    { id: 'a32', studentId: 's7', date: '2024-07-21', subject: 'Análisis Matemático III', status: AttendanceStatus.PRESENT },
+    { id: 'a33', studentId: 's7', date: '2024-07-22', subject: 'Análisis Matemático III', status: AttendanceStatus.PRESENT },
+    
+    // Sofia Castro (s9) - Química General
+    { id: 'a34', studentId: 's9', date: '2024-07-22', subject: 'Química General', status: AttendanceStatus.ABSENT },
+    { id: 'a35', studentId: 's9', date: '2024-07-29', subject: 'Química General', status: AttendanceStatus.PRESENT },
+    
+    // David Romero (s10) - Química General
+    { id: 'a36', studentId: 's10', date: '2024-07-22', subject: 'Química General', status: AttendanceStatus.PRESENT },
+    { id: 'a37', studentId: 's10', date: '2024-07-29', subject: 'Química General', status: AttendanceStatus.LATE },
+
+    // Martin Suarez (s12) - Introducción a la Administración
+    { id: 'a38', studentId: 's12', date: '2024-07-22', subject: 'Introducción a la Administración', status: AttendanceStatus.PRESENT },
+    { id: 'a39', studentId: 's12', date: '2024-07-29', subject: 'Introducción a la Administración', status: AttendanceStatus.PRESENT },
+
+    // Camila Rios (s15) - Sistemas Operativos
+    { id: 'a40', studentId: 's15', date: '2024-08-01', subject: 'Sistemas Operativos', status: AttendanceStatus.PRESENT },
+    { id: 'a41', studentId: 's15', date: '2024-08-08', subject: 'Sistemas Operativos', status: AttendanceStatus.ABSENT },
+    
+    // Valeria Benitez (s17) - Programación I
+    { id: 'a42', studentId: 's17', date: '2024-07-18', subject: 'Programación I', status: AttendanceStatus.LATE },
+    { id: 'a43', studentId: 's17', date: '2024-07-25', subject: 'Programación I', status: AttendanceStatus.PRESENT },
+
+    // Attendance for newly added students
+    // Julieta Vazquez (s19) - Programación I
+    { id: 'a44', studentId: 's19', date: '2024-07-25', subject: 'Programación I', status: AttendanceStatus.PRESENT },
+    { id: 'a45', studentId: 's19', date: '2024-08-01', subject: 'Programación I', status: AttendanceStatus.PRESENT },
+
+    // Mateo Castillo (s20) - Sistemas Operativos
+    { id: 'a46', studentId: 's20', date: '2024-08-01', subject: 'Sistemas Operativos', status: AttendanceStatus.LATE },
+    { id: 'a47', studentId: 's20', date: '2024-08-08', subject: 'Sistemas Operativos', status: AttendanceStatus.PRESENT },
+
+    // Isabella Morales (s21) - Química General
+    { id: 'a48', studentId: 's21', date: '2024-07-22', subject: 'Química General', status: AttendanceStatus.PRESENT },
+    { id: 'a49', studentId: 's21', date: '2024-07-29', subject: 'Química General', status: AttendanceStatus.ABSENT },
+
+    // Santiago Molina (s22) - Química General
+    { id: 'a50', studentId: 's22', date: '2024-07-22', subject: 'Química General', status: AttendanceStatus.PRESENT },
+    { id: 'a51', studentId: 's22', date: '2024-07-29', subject: 'Química General', status: AttendanceStatus.PRESENT },
+
+    // Renata Ortega (s23) - Administración I
+    { id: 'a52', studentId: 's23', date: '2024-08-05', subject: 'Administración I', status: AttendanceStatus.PRESENT },
+    { id: 'a53', studentId: 's23', date: '2024-08-12', subject: 'Administración I', status: AttendanceStatus.ABSENT },
+
+    // Lucas Paredes (s24) - Física Cuántica I
+    { id: 'a54', studentId: 's24', date: '2024-08-02', subject: 'Física Cuántica I', status: AttendanceStatus.PRESENT },
+    { id: 'a55', studentId: 's24', date: '2024-08-09', subject: 'Física Cuántica I', status: AttendanceStatus.LATE },
 ];
 
 export let notifications: Notification[] = [
@@ -151,6 +221,13 @@ export let calendarEvents: CalendarEvent[] = [
     { id: 'ce220', title: 'Acto de Colación 2025', date: '2025-12-19', type: CalendarEventType.INSTITUTIONAL, description: 'Ceremonia de graduación en el auditorio principal.' }
 ];
 
+export let notes: Note[] = [
+    { id: 'note1', userId: 's1', text: 'Estudiar para el parcial de Física II, temas 1 a 4.', lastUpdated: '2024-07-28T10:00:00Z' },
+    { id: 'note2', userId: 's1', text: 'Recordar pedir el justificativo de inasistencia en preceptoría.', lastUpdated: '2024-07-27T15:30:00Z' },
+    { id: 'note3', userId: 'p1', text: 'Preparar listados para las mesas de examen de Agosto.', lastUpdated: '2024-07-29T09:00:00Z' },
+    { id: 'note4', userId: 'p1', text: 'Contactar a los alumnos con bajo rendimiento en Física II.', lastUpdated: '2024-07-29T11:00:00Z' },
+];
+
 
 // Mock API functions
 export const mockApiService = {
@@ -161,6 +238,17 @@ export const mockApiService = {
         // If studentId is empty, return all records (for preceptor dashboard)
         if (!studentId) return attendanceRecords;
         return attendanceRecords.filter(a => a.studentId === studentId);
+    },
+    getMonthlyAttendanceForClass: (studentIds: string[], subject: string, year: number, month: number): AttendanceRecord[] => {
+        return attendanceRecords.filter(record => {
+            const recordDate = new Date(record.date + 'T00:00:00');
+            return (
+                studentIds.includes(record.studentId) &&
+                record.subject === subject &&
+                recordDate.getUTCFullYear() === year &&
+                recordDate.getUTCMonth() === month
+            );
+        });
     },
     getStudentsByCareerAndYear: (career: string, year: number): Student[] => {
         return students.filter(s => s.careers.includes(career) && s.year === year);
@@ -246,5 +334,27 @@ export const mockApiService = {
     },
     deleteCalendarEvent: (eventId: string) => {
         calendarEvents = calendarEvents.filter(e => e.id !== eventId);
+    },
+    getNotes: (userId: string): Note[] => {
+        return notes.filter(n => n.userId === userId).sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
+    },
+    addNote: (userId: string, text: string) => {
+        const newNote: Note = {
+            id: `note${Date.now()}`,
+            userId,
+            text,
+            lastUpdated: new Date().toISOString()
+        };
+        notes.push(newNote);
+    },
+    updateNote: (noteId: string, text: string) => {
+        const index = notes.findIndex(n => n.id === noteId);
+        if (index !== -1) {
+            notes[index].text = text;
+            notes[index].lastUpdated = new Date().toISOString();
+        }
+    },
+    deleteNote: (noteId: string) => {
+        notes = notes.filter(n => n.id !== noteId);
     },
 };
