@@ -1,6 +1,7 @@
 export enum UserRole {
     STUDENT = 'student',
-    PRECEPTOR = 'preceptor'
+    PRECEPTOR = 'preceptor',
+    ADMIN = 'admin'
 }
 
 export interface User {
@@ -17,6 +18,20 @@ export interface Student extends User {
 }
 
 export interface Preceptor extends User {}
+
+export interface Admin extends User {}
+
+export interface Subject {
+    id:string;
+    name: string;
+    year: number;
+}
+
+export interface Career {
+    id: string;
+    name: string;
+    subjects: Subject[];
+}
 
 export enum AttendanceStatus {
     PRESENT = 'Presente',
@@ -81,4 +96,24 @@ export interface Note {
     userId: string;
     text: string;
     lastUpdated: string;
+}
+
+export enum SuggestionComplaintType {
+    SUGGESTION = 'Sugerencia',
+    COMPLAINT = 'Queja'
+}
+
+export enum SuggestionComplaintStatus {
+    NEW = 'Nueva',
+    READ = 'Leída',
+    RESOLVED = 'Resuelta'
+}
+
+export interface SuggestionComplaint {
+    id: string;
+    userId: string;
+    type: SuggestionComplaintType;
+    text: string;
+    date: string;
+    status: SuggestionComplaintStatus;
 }

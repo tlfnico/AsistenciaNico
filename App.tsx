@@ -17,6 +17,14 @@ import PreceptorCalendarScreen from './screens/preceptor/CalendarScreen';
 import ChatDetailScreen from './screens/ChatDetailScreen';
 import { UserRole } from './types';
 import PreceptorProfileScreen from './screens/preceptor/ProfileScreen';
+import AdminLayout from './components/layout/AdminLayout';
+import AdminDashboardScreen from './screens/admin/DashboardScreen';
+import UserManagementScreen from './screens/admin/UserManagementScreen';
+import CareerManagementScreen from './screens/admin/CareerManagementScreen';
+import SuggestionsScreen from './screens/admin/ReportsScreen';
+import GlobalNotificationsScreen from './screens/admin/GlobalNotificationsScreen';
+import AcademicCalendarScreen from './screens/admin/AcademicCalendarScreen';
+import SettingsScreen from './screens/admin/SettingsScreen';
 
 const AppRoutes: React.FC = () => {
     const { user } = useAuth();
@@ -63,6 +71,24 @@ const AppRoutes: React.FC = () => {
                     <Route path="*" element={<Navigate to="/inicio" />} />
                 </Routes>
             </PreceptorLayout>
+        );
+    }
+
+    if (user.role === UserRole.ADMIN) {
+        return (
+            <AdminLayout>
+                <Routes>
+                    <Route path="/" element={<Navigate to="/inicio" replace />} />
+                    <Route path="/inicio" element={<AdminDashboardScreen />} />
+                    <Route path="/usuarios" element={<UserManagementScreen />} />
+                    <Route path="/carreras" element={<CareerManagementScreen />} />
+                    <Route path="/sugerencias" element={<SuggestionsScreen />} />
+                    <Route path="/notificaciones-globales" element={<GlobalNotificationsScreen />} />
+                    <Route path="/calendario-academico" element={<AcademicCalendarScreen />} />
+                    <Route path="/configuracion" element={<SettingsScreen />} />
+                    <Route path="*" element={<Navigate to="/inicio" />} />
+                </Routes>
+            </AdminLayout>
         );
     }
 

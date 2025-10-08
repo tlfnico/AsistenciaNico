@@ -1,4 +1,4 @@
-import { Student, Preceptor, UserRole, AttendanceRecord, AttendanceStatus, Notification, NotificationCategory, Message, Conversation, CalendarEvent, CalendarEventType, User, Note } from '../types';
+import { Student, Preceptor, UserRole, AttendanceRecord, AttendanceStatus, Notification, NotificationCategory, Message, Conversation, CalendarEvent, CalendarEventType, User, Note, Admin, Career, Subject, SuggestionComplaint, SuggestionComplaintType, SuggestionComplaintStatus } from '../types';
 
 export const students: Student[] = [
     { id: 's1', name: 'Juan Perez', email: 'juan.perez@email.com', role: UserRole.STUDENT, dni: '12345678', careers: ['Ingeniería en Sistemas', 'Licenciatura en Física'], year: 3 },
@@ -34,15 +34,52 @@ export const preceptors: Preceptor[] = [
     { id: 'p3', name: 'Marta Diaz', email: 'marta.diaz@email.com', role: UserRole.PRECEPTOR },
 ];
 
-export const users: (Student | Preceptor)[] = [...students, ...preceptors];
+export const admins: Admin[] = [
+    { id: 'adm1', name: 'Admin General', email: 'admin@email.com', role: UserRole.ADMIN },
+];
 
-export const subjectsByCareer: { [career: string]: string[] } = {
-    'Ingeniería en Sistemas': ['Análisis Matemático III', 'Física II', 'Programación I', 'Sistemas Operativos', 'Base de Datos'],
-    'Ingeniería Química': ['Química General', 'Química Orgánica'],
-    'Licenciatura en Administración': ['Introducción a la Administración', 'Administración I'],
-    'Licenciatura en Física': ['Física Cuántica I', 'Mecánica Clásica Avanzada']
-};
+export let users: (Student | Preceptor | Admin)[] = [...students, ...preceptors, ...admins];
 
+export let careers: Career[] = [
+    { 
+        id: 'c1', 
+        name: 'Ingeniería en Sistemas', 
+        subjects: [
+            { id: 's1-1', name: 'Programación I', year: 1 },
+            { id: 's1-2', name: 'Análisis Matemático I', year: 1 },
+            { id: 's1-3', name: 'Sistemas Operativos', year: 2 },
+            { id: 's1-4', name: 'Base de Datos', year: 2 },
+            { id: 's1-5', name: 'Análisis Matemático III', year: 3 },
+            { id: 's1-6', name: 'Física II', year: 3 },
+        ] 
+    },
+    { 
+        id: 'c2', 
+        name: 'Ingeniería Química', 
+        subjects: [
+            { id: 's2-1', name: 'Química General', year: 1 },
+            { id: 's2-2', name: 'Química Orgánica', year: 2 },
+        ] 
+    },
+    { 
+        id: 'c3', 
+        name: 'Licenciatura en Administración', 
+        subjects: [
+            { id: 's3-1', name: 'Introducción a la Administración', year: 1 },
+            { id: 's3-2', name: 'Administración I', year: 1 },
+            { id: 's3-3', name: 'Contabilidad', year: 2},
+        ] 
+    },
+    { 
+        id: 'c4', 
+        name: 'Licenciatura en Física', 
+        subjects: [
+            { id: 's4-1', name: 'Física I', year: 1 },
+            { id: 's4-2', name: 'Física Cuántica I', year: 3 },
+            { id: 's4-3', name: 'Mecánica Clásica Avanzada', year: 3 },
+        ] 
+    }
+];
 
 export let attendanceRecords: AttendanceRecord[] = [
     // Juan Perez - Análisis Matemático III (Good Attendance)
@@ -228,11 +265,59 @@ export let notes: Note[] = [
     { id: 'note4', userId: 'p1', text: 'Contactar a los alumnos con bajo rendimiento en Física II.', lastUpdated: '2024-07-29T11:00:00Z' },
 ];
 
+export let suggestionsComplaints: SuggestionComplaint[] = [
+    { id: 'sc1', userId: 's1', type: SuggestionComplaintType.COMPLAINT, text: 'El proyector del aula 205 no funciona correctamente, la imagen se ve muy oscura.', date: '2024-07-28', status: SuggestionComplaintStatus.NEW },
+    { id: 'sc2', userId: 'p1', type: SuggestionComplaintType.SUGGESTION, text: 'Sería útil tener una función para exportar las listas de asistencia a un archivo CSV.', date: '2024-07-27', status: SuggestionComplaintStatus.READ },
+    { id: 'sc3', userId: 's2', type: SuggestionComplaintType.SUGGESTION, text: 'Podrían agregar mapas de la universidad en la app para los nuevos estudiantes.', date: '2024-07-25', status: SuggestionComplaintStatus.RESOLVED },
+];
+
 
 // Mock API functions
 export const mockApiService = {
     login: (email: string): User | null => {
         return users.find(u => u.email === email) || null;
+    },
+    getAllUsers: (): (Student | Preceptor | Admin)[] => {
+        return [...users];
+    },
+    addUser: (user: Omit<User, 'id'>) => {
+        const baseId = user.role.charAt(0);
+        const newUser = {
+            ...user,
+            id: `${baseId}${Date.now()}`
+        };
+        users.push(newUser);
+        return newUser;
+    },
+    updateUser: (updatedUser: User) => {
+        const index = users.findIndex(u => u.id === updatedUser.id);
+        if (index !== -1) {
+            users[index] = { ...users[index], ...updatedUser };
+        }
+    },
+    deleteUser: (userId: string) => {
+        users = users.filter(u => u.id !== userId);
+    },
+    getCareers: (): Career[] => {
+        return [...careers];
+    },
+    addCareer: (career: Omit<Career, 'id'>) => {
+        const newCareer = { ...career, id: `c${Date.now()}`};
+        careers.push(newCareer);
+        return newCareer;
+    },
+    updateCareer: (updatedCareer: Career) => {
+        const index = careers.findIndex(c => c.id === updatedCareer.id);
+        if (index !== -1) {
+            careers[index] = updatedCareer;
+        }
+    },
+    deleteCareer: (careerId: string) => {
+        careers = careers.filter(c => c.id !== careerId);
+    },
+    getSubjectsForCareer: (careerName: string): string[] => {
+        const career = careers.find(c => c.name === careerName);
+        return career ? career.subjects.map(s => s.name) : [];
     },
     getStudentAttendance: (studentId: string): AttendanceRecord[] => {
         // If studentId is empty, return all records (for preceptor dashboard)
@@ -317,7 +402,7 @@ export const mockApiService = {
         });
     },
     getCalendarEvents: (): CalendarEvent[] => {
-        return calendarEvents.sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        return [...calendarEvents].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     },
     addCalendarEvent: (event: Omit<CalendarEvent, 'id'>) => {
         const newEvent: CalendarEvent = {
@@ -356,5 +441,25 @@ export const mockApiService = {
     },
     deleteNote: (noteId: string) => {
         notes = notes.filter(n => n.id !== noteId);
+    },
+    getSuggestionsComplaints: (): SuggestionComplaint[] => {
+        return [...suggestionsComplaints].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    },
+    addSuggestionComplaint: (data: { userId: string, type: SuggestionComplaintType, text: string }) => {
+        const newEntry: SuggestionComplaint = {
+            id: `sc${Date.now()}`,
+            userId: data.userId,
+            type: data.type,
+            text: data.text,
+            date: new Date().toISOString().split('T')[0],
+            status: SuggestionComplaintStatus.NEW,
+        };
+        suggestionsComplaints.unshift(newEntry);
+    },
+    updateSuggestionComplaintStatus: (id: string, status: SuggestionComplaintStatus) => {
+        const index = suggestionsComplaints.findIndex(sc => sc.id === id);
+        if (index !== -1) {
+            suggestionsComplaints[index].status = status;
+        }
     },
 };

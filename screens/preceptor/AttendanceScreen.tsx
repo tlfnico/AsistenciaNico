@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { mockApiService, students as allStudents, subjectsByCareer } from '../../services/mockData';
+import { mockApiService, students as allStudents } from '../../services/mockData';
 import { Student, AttendanceStatus, AttendanceRecord } from '../../types';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
@@ -125,9 +125,9 @@ const PreceptorAttendanceScreen: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [reportDate, setReportDate] = useState(new Date());
 
-    const availableCareers = useMemo(() => [...new Set(allStudents.flatMap(s => s.careers))], []);
+    const availableCareers = useMemo(() => mockApiService.getCareers().map(c => c.name), []);
     const availableYears = useMemo(() => [...new Set(allStudents.map(s => s.year))].sort(), []);
-    const availableSubjects = useMemo(() => filters.career ? subjectsByCareer[filters.career] || [] : [], [filters.career]);
+    const availableSubjects = useMemo(() => filters.career ? mockApiService.getSubjectsForCareer(filters.career) : [], [filters.career]);
     
     useEffect(() => {
         setReportDate(new Date(filters.date + 'T00:00:00'));

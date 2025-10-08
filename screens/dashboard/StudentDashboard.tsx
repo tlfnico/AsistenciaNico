@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import Card from '../../components/common/Card';
 import { mockApiService } from '../../services/mockData';
-import { AttendanceStatus, Notification, NotificationCategory } from '../../types';
+import { AttendanceStatus, Notification, NotificationCategory, SuggestionComplaintType } from '../../types';
 import Icon from '../../components/common/Icon';
 import { Link } from 'react-router-dom';
+import Button from '../../components/common/Button';
 
 const getCategoryClasses = (category: NotificationCategory) => {
     switch(category) {
@@ -14,6 +15,51 @@ const getCategoryClasses = (category: NotificationCategory) => {
         default: return { border: 'border-gray-500', text: 'text-gray-600', bg: 'bg-gray-50'};
     }
 }
+
+const FeedbackCard: React.FC = () => {
+    const { user } = useAuth();
+    const [type, setType] = useState<SuggestionComplaintType>(SuggestionComplaintType.SUGGESTION);
+    const [text, setText] = useState('');
+    const [feedback, setFeedback] = useState('');
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!text.trim() || !user) return;
+        
+        mockApiService.addSuggestionComplaint({ userId: user.id, type, text });
+        
+        setFeedback('¡Gracias por tu opinión!');
+        setText('');
+        setTimeout(() => setFeedback(''), 3000);
+    };
+
+    return (
+        <Card>
+            <div className="flex items-center gap-3 mb-4">
+                <Icon name="chat" className="w-8 h-8 text-brand-primary" />
+                <h2 className="text-xl font-bold text-brand-text">¿Sugerencias o Quejas?</h2>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-3">
+                <textarea 
+                    value={text} 
+                    onChange={e => setText(e.target.value)}
+                    placeholder="Escribe tu mensaje aquí..."
+                    rows={4}
+                    className="w-full border-gray-300 rounded-md shadow-sm p-2"
+                    required
+                />
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                    <select value={type} onChange={e => setType(e.target.value as SuggestionComplaintType)} className="border-gray-300 rounded-md shadow-sm p-2">
+                        <option value={SuggestionComplaintType.SUGGESTION}>Sugerencia</option>
+                        <option value={SuggestionComplaintType.COMPLAINT}>Queja</option>
+                    </select>
+                    <Button type="submit">Enviar</Button>
+                </div>
+                 {feedback && <p className="text-green-600 font-semibold text-right">{feedback}</p>}
+            </form>
+        </Card>
+    );
+};
 
 const StudentDashboard: React.FC = () => {
     const { user } = useAuth();
@@ -74,6 +120,7 @@ const StudentDashboard: React.FC = () => {
                     </Card>
                 )}
             </div>
+            <FeedbackCard />
         </div>
     );
 };

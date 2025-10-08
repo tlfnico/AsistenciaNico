@@ -200,7 +200,7 @@ const CalendarScreen: React.FC = () => {
     const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
     const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
     const [view, setView] = useState<'month' | 'agenda'>('month');
-    const allEvents = mockApiService.getCalendarEvents();
+    const allEvents = mockApiService.getCalendarEvents().filter(e => e.type !== CalendarEventType.EXAM);
 
     const changeMonth = (offset: number) => {
         setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + offset, 1));
