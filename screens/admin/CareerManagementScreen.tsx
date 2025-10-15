@@ -147,13 +147,47 @@ const CareerManagementScreen: React.FC = () => {
             </div>
 
             <Card>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <input type="text" name="name" placeholder="Buscar por carrera..." value={filters.name} onChange={handleFilterChange} className="border-gray-300 rounded-md shadow-sm p-2" />
-                    <select name="year" value={filters.year} onChange={handleFilterChange} className="border-gray-300 rounded-md shadow-sm p-2">
-                        <option value="">Filtrar por año</option>
-                        {[1, 2, 3, 4, 5, 6].map(y => <option key={y} value={y}>{y}° Año</option>)}
-                    </select>
-                    <input type="text" name="subject" placeholder="Buscar por materia..." value={filters.subject} onChange={handleFilterChange} className="border-gray-300 rounded-md shadow-sm p-2" />
+                <div className="space-y-4">
+                    <div>
+                        <label htmlFor="name-filter" className="block text-sm font-medium text-gray-700">Buscar por carrera</label>
+                        <input
+                            id="name-filter"
+                            type="text"
+                            name="name"
+                            placeholder="Ej: Ingeniería en Sistemas"
+                            value={filters.name}
+                            onChange={handleFilterChange}
+                            className="mt-1 w-full border-gray-300 rounded-md shadow-sm p-2"
+                        />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                             <label htmlFor="subject-filter" className="block text-sm font-medium text-gray-700">Filtrar por materia</label>
+                             <input
+                                id="subject-filter"
+                                type="text"
+                                name="subject"
+                                placeholder="Ej: Programación"
+                                value={filters.subject}
+                                onChange={handleFilterChange}
+                                className="mt-1 w-full border-gray-300 rounded-md shadow-sm p-2"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="year-filter" className="block text-sm font-medium text-gray-700">Filtrar por año</label>
+                            <select
+                                id="year-filter"
+                                name="year"
+                                value={filters.year}
+                                onChange={handleFilterChange}
+                                className="mt-1 w-full border-gray-300 rounded-md shadow-sm p-2"
+                            >
+                                <option value="">Todos los años</option>
+                                {[1, 2, 3, 4, 5, 6].map(y => <option key={y} value={y}>{y}° Año</option>)}
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </Card>
             

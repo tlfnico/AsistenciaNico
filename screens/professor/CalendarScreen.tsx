@@ -7,7 +7,6 @@ import { mockApiService } from '../../services/mockData';
 import Icon, { IconName } from '../../components/common/Icon';
 import Button from '../../components/common/Button';
 import EventModal from '../../components/calendar/EventModal';
-import { useAuth } from '../../hooks/useAuth';
 
 const getEventTypeStyles = (type: CalendarEventType) => {
     switch (type) {
@@ -27,6 +26,8 @@ const InteractiveCalendar: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingEvent, setEditingEvent] = useState<Partial<CalendarEvent> | null>(null);
     
+    const allowedEventTypes = [CalendarEventType.EXAM, CalendarEventType.MEETING];
+
     const refreshEvents = () => setEvents(mockApiService.getCalendarEvents());
 
     const handleOpenModal = (event: Partial<CalendarEvent> | null) => {
@@ -112,8 +113,9 @@ const InteractiveCalendar: React.FC = () => {
                         {eventsForSelectedDate.length > 0 ? (
                             eventsForSelectedDate.map(event => {
                                 const styles = getEventTypeStyles(event.type);
+                                const canEdit = allowedEventTypes.includes(event.type);
                                 return (
-                                <div key={event.id} onClick={() => handleOpenModal(event)} className="p-3 rounded-md bg-gray-50 flex gap-3 items-start cursor-pointer hover:bg-gray-100">
+                                <div key={event.id} onClick={() => canEdit && handleOpenModal(event)} className={`p-3 rounded-md bg-gray-50 flex gap-3 items-start ${canEdit ? 'cursor-pointer hover:bg-gray-100' : ''}`}>
                                     <div className={`mt-1 flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full ${styles.color} bg-opacity-20`}>
                                         <Icon name={styles.icon as IconName} className={`w-3 h-3 ${styles.iconColor}`} />
                                     </div>
@@ -138,7 +140,7 @@ const InteractiveCalendar: React.FC = () => {
                     event={editingEvent}
                     onClose={handleCloseModal}
                     onSave={handleSave}
-                    allowedEventTypes={Object.values(CalendarEventType)}
+                    allowedEventTypes={allowedEventTypes}
                 />
             )}
         </>
@@ -146,7 +148,7 @@ const InteractiveCalendar: React.FC = () => {
 };
 
 
-const PreceptorCalendarScreen: React.FC = () => {
+const ProfessorCalendarScreen: React.FC = () => {
     return (
         <div className="space-y-6">
             <h1 className="text-3xl font-bold text-brand-text">Calendario y Tareas</h1>
@@ -164,4 +166,4 @@ const PreceptorCalendarScreen: React.FC = () => {
     );
 };
 
-export default PreceptorCalendarScreen;
+export default ProfessorCalendarScreen;

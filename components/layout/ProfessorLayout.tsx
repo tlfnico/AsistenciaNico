@@ -12,20 +12,19 @@ interface NavItem {
 
 const navItems: NavItem[] = [
     { path: '/inicio', label: 'Inicio', icon: 'home' },
-    { path: '/usuarios', label: 'Usuarios', icon: 'users' },
-    { path: '/carreras', label: 'Carreras', icon: 'academic-cap' },
-    { path: '/sugerencias', label: 'Sugerencias', icon: 'chat' },
+    { path: '/asistencia', label: 'Asistencia', icon: 'attendance' },
+    { path: '/cursos', label: 'Mis Cursos', icon: 'academic-cap' },
+    { path: '/notificaciones', label: 'Notificaciones', icon: 'notifications' },
     { path: '/chat', label: 'Chat', icon: 'chat' },
-    { path: '/notificaciones-globales', label: 'Notificaciones', icon: 'notifications' },
-    { path: '/calendario-academico', label: 'Calendario', icon: 'calendar' },
+    { path: '/calendario', label: 'Calendario', icon: 'calendar' },
+    { path: '/sugerencias', label: 'Sugerencias', icon: 'chat' },
     { path: '/perfil', label: 'Perfil', icon: 'profile' },
-    { path: '/configuracion', label: 'Configuración', icon: 'cog' },
 ];
 
-const mobilePrimaryNavItems = navItems.slice(0, 3); // Home, Users, Careers
+const mobilePrimaryNavItems = navItems.slice(0, 3); // Inicio, Asistencia, Cursos
 const mobileMoreNavItems = navItems.slice(3); // The rest
 
-const AdminLayout: React.FC<{ children: ReactNode }> = ({ children }) => {
+const ProfessorLayout: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { logout, user } = useAuth();
     const navigate = useNavigate();
     const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
@@ -52,8 +51,8 @@ const AdminLayout: React.FC<{ children: ReactNode }> = ({ children }) => {
             <aside className="hidden md:flex md:flex-col md:w-72 bg-brand-primary text-white p-4 justify-between">
                  <div>
                     <div className="mb-10 text-center">
-                        <h1 className="text-3xl font-bold">Panel</h1>
-                        <h2 className="text-2xl">Admin</h2>
+                        <h1 className="text-3xl font-bold">Portal</h1>
+                        <h2 className="text-2xl">Profesor</h2>
                         <p className="text-md mt-4 text-blue-200">{user?.name}</p>
                     </div>
                     <nav className="flex flex-col gap-3">
@@ -91,7 +90,7 @@ const AdminLayout: React.FC<{ children: ReactNode }> = ({ children }) => {
                         <span className="text-xs">{item.label}</span>
                     </NavLink>
                 ))}
-                <button onClick={() => setIsMoreMenuOpen(true)} className={`${mobileNavLinkClasses} ${mobileInactiveNavLink}`}>
+                 <button onClick={() => setIsMoreMenuOpen(true)} className={`${mobileNavLinkClasses} ${mobileInactiveNavLink}`}>
                     <Icon name="ellipsis-vertical" className="w-6 h-6 mb-1" />
                     <span className="text-xs">Más</span>
                 </button>
@@ -136,4 +135,4 @@ const AdminLayout: React.FC<{ children: ReactNode }> = ({ children }) => {
     );
 };
 
-export default AdminLayout;
+export default ProfessorLayout;

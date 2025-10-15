@@ -5,7 +5,9 @@ import { mockApiService } from '../../services/mockData';
 import Icon from '../../components/common/Icon';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../../components/common/Button';
-import { Conversation, SuggestionComplaintType } from '../../types';
+import { ConversationListItem, SuggestionComplaintType } from '../../types';
+import UpcomingEventsCard from '../../components/dashboard/UpcomingEventsCard';
+import PersonalTasksCard from '../../components/dashboard/PersonalTasksCard';
 
 const FeedbackCard: React.FC = () => {
     const { user } = useAuth();
@@ -56,15 +58,16 @@ const PreceptorDashboard: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
 
-    const unreadConversations = useMemo((): Conversation[] => {
+    const unreadConversations = useMemo((): ConversationListItem[] => {
         if (!user) return [];
         const allConversations = mockApiService.getConversations(user.id);
         return allConversations
-            .filter(convo => 
-                convo.lastMessage.receiverId === user.id && 
-                convo.lastMessage.readTimestamp === null
+            .filter(convo =>
+                convo.lastMessage &&
+                convo.lastMessage.senderId !== user.id &&
+                !convo.lastMessage.readBy.includes(user.id)
             )
-            .slice(0, 4); // Show top 4 unread conversations
+            .slice(0, 4);
     }, [user]);
 
     if (!user) return null;
@@ -77,9 +80,7 @@ const PreceptorDashboard: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Main Column */}
                 <div className="lg:col-span-2 space-y-6">
-                     {/* Quick Actions */}
                     <Card>
                          <h2 className="text-xl font-bold text-brand-text mb-4">Acciones Rápidas</h2>
                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -93,12 +94,11 @@ const PreceptorDashboard: React.FC = () => {
                             </Button>
                          </div>
                     </Card>
+                    <PersonalTasksCard />
                     <FeedbackCard />
                 </div>
                 
-                {/* Side Column */}
                 <div className="lg:col-span-1 space-y-6">
-                    {/* Unread Messages */}
                     <Card className="bg-blue-50 border-l-4 border-brand-secondary">
                         <div className="flex items-center gap-3 mb-4">
                             <Icon name="chat" className="w-8 h-8 text-brand-primary" />
@@ -108,14 +108,14 @@ const PreceptorDashboard: React.FC = () => {
                             {unreadConversations.length > 0 ? unreadConversations.map(convo => (
                                 <div 
                                     key={convo.id} 
-                                    onClick={() => navigate(`/chat/${convo.participant.id}`)} 
+                                    onClick={() => navigate(`/chat/${convo.id}`)} 
                                     className="p-3 bg-white rounded-lg border border-blue-200 cursor-pointer hover:bg-blue-100 transition-colors"
                                 >
                                     <div className="flex justify-between items-center">
-                                        <p className="font-semibold text-brand-text">{convo.participant.name}</p>
-                                        <p className="text-xs text-gray-500">{new Date(convo.lastMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                        <p className="font-semibold text-brand-text">{convo.name}</p>
+                                        <p className="text-xs text-gray-500">{new Date(convo.lastMessage!.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                                     </div>
-                                    <p className="text-sm text-gray-600 truncate mt-1">{convo.lastMessage.text}</p>
+                                    <p className="text-sm text-gray-600 truncate mt-1">{convo.lastMessage!.text}</p>
                                 </div>
                             )) : (
                                 <p className="text-gray-500">No tienes mensajes nuevos.</p>
@@ -127,6 +127,7 @@ const PreceptorDashboard: React.FC = () => {
                             </Link>
                         )}
                     </Card>
+                    <UpcomingEventsCard linkTo="/calendario" />
                 </div>
             </div>
         </div>

@@ -1,7 +1,10 @@
+import { ReactNode } from "react";
+
 export enum UserRole {
     STUDENT = 'student',
     PRECEPTOR = 'preceptor',
-    ADMIN = 'admin'
+    ADMIN = 'admin',
+    PROFESSOR = 'professor'
 }
 
 export interface User {
@@ -19,12 +22,17 @@ export interface Student extends User {
 
 export interface Preceptor extends User {}
 
+export interface Professor extends User {
+    subjects: string[]; // Array of subject IDs
+}
+
 export interface Admin extends User {}
 
 export interface Subject {
     id:string;
     name: string;
     year: number;
+    professorId?: string;
 }
 
 export interface Career {
@@ -64,23 +72,34 @@ export interface Notification {
 export interface Message {
     id: string;
     senderId: string;
-    receiverId: string;
+    conversationId: string;
     text: string;
     timestamp: string;
-    readTimestamp: string | null;
+    readBy: string[]; // List of user IDs who have read the message
 }
 
 export interface Conversation {
     id: string;
-    participant: User;
-    lastMessage: Message;
+    isGroup: boolean;
+    name?: string; // Only for groups
+    participants: string[]; // array of user IDs
 }
+
+// Used for the list view of all chats
+export interface ConversationListItem {
+    id: string;
+    name: string;
+    isGroup: boolean;
+    lastMessage?: Message;
+}
+
 
 export enum CalendarEventType {
     EXAM = 'Parcial',
     FINAL = 'Final',
     ENROLLMENT = 'Inscripción',
-    INSTITUTIONAL = 'Acto Institucional'
+    INSTITUTIONAL = 'Acto Institucional',
+    MEETING = 'Reunión'
 }
 
 export interface CalendarEvent {
@@ -95,6 +114,7 @@ export interface Note {
     id: string;
     userId: string;
     text: string;
+    date: string;
     lastUpdated: string;
 }
 

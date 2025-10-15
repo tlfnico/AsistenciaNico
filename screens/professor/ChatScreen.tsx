@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { mockApiService, preceptors } from '../../services/mockData';
-import { ConversationListItem, Preceptor } from '../../types';
+import { mockApiService } from '../../services/mockData';
+import { ConversationListItem } from '../../types';
 import Card from '../../components/common/Card';
-import Button from '../../components/common/Button';
 import Icon from '../../components/common/Icon';
 
-const ChatScreen: React.FC = () => {
+const ProfessorChatScreen: React.FC = () => {
     const { user } = useAuth();
     const [conversations, setConversations] = useState<ConversationListItem[]>([]);
-    const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
     const navigate = useNavigate();
 
     const refreshConversations = () => {
@@ -23,31 +21,16 @@ const ChatScreen: React.FC = () => {
         refreshConversations();
     }, [user]);
 
-    const handleStartNewChat = (preceptor: Preceptor) => {
-        if (!user) return;
-        const newConvo = mockApiService.getOrCreateConversation(user.id, preceptor.id);
-        navigate(`/chat/${newConvo.id}`);
-        setIsNewChatModalOpen(false);
-    };
-
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold text-brand-text">Chat</h1>
-                <div className="flex gap-2">
-                    <Button onClick={() => setIsNewChatModalOpen(true)} variant="secondary">
-                        <div className="flex items-center gap-2">
-                            <Icon name="chat" className="w-5 h-5" />
-                            <span>Chat Preceptor</span>
-                        </div>
-                    </Button>
-                </div>
             </div>
             <Card>
                 <div className="divide-y divide-gray-200">
                     {conversations.length > 0 ? conversations.map(convo => (
                         <div key={convo.id} onClick={() => navigate(`/chat/${convo.id}`)} className="p-4 hover:bg-gray-50 cursor-pointer">
-                            <div className="flex justify-between items-center">
+                           <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-3">
                                     {convo.isGroup && <Icon name="users" className="w-6 h-6 text-gray-400 flex-shrink-0" />}
                                     <h3 className="font-semibold text-lg text-brand-text">{convo.name}</h3>
@@ -63,23 +46,8 @@ const ChatScreen: React.FC = () => {
                     )}
                 </div>
             </Card>
-
-            {isNewChatModalOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" onClick={() => setIsNewChatModalOpen(false)}>
-                    <Card className="w-11/12 max-w-md" onClick={e => e.stopPropagation()}>
-                        <h2 className="text-2xl font-bold text-brand-text mb-4">Iniciar chat con un preceptor</h2>
-                        <div className="space-y-2 max-h-96 overflow-y-auto">
-                            {preceptors.map(p => (
-                                <div key={p.id} onClick={() => handleStartNewChat(p)} className="p-3 hover:bg-gray-100 cursor-pointer rounded-lg">
-                                    <p className="font-semibold text-brand-text">{p.name}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </Card>
-                </div>
-            )}
         </div>
     );
 };
 
-export default ChatScreen;
+export default ProfessorChatScreen;

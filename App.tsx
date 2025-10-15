@@ -25,6 +25,20 @@ import SuggestionsScreen from './screens/admin/ReportsScreen';
 import GlobalNotificationsScreen from './screens/admin/GlobalNotificationsScreen';
 import AcademicCalendarScreen from './screens/admin/AcademicCalendarScreen';
 import SettingsScreen from './screens/admin/SettingsScreen';
+import AdminProfileScreen from './screens/admin/ProfileScreen';
+import AdminChatScreen from './screens/admin/ChatScreen';
+
+// Professor Imports
+import ProfessorLayout from './components/layout/ProfessorLayout';
+import ProfessorDashboardScreen from './screens/professor/DashboardScreen';
+import ProfessorAttendanceScreen from './screens/professor/AttendanceScreen';
+import ProfessorCoursesScreen from './screens/professor/CoursesScreen';
+import ProfessorCourseDetailScreen from './screens/professor/CourseDetailScreen';
+import ProfessorNotificationsScreen from './screens/professor/NotificationsScreen';
+import ProfessorChatScreen from './screens/professor/ChatScreen';
+import ProfessorCalendarScreen from './screens/professor/CalendarScreen';
+import ProfessorSuggestionsScreen from './screens/professor/SuggestionsScreen';
+import ProfessorProfileScreen from './screens/professor/ProfileScreen';
 
 const AppRoutes: React.FC = () => {
     const { user } = useAuth();
@@ -83,12 +97,36 @@ const AppRoutes: React.FC = () => {
                     <Route path="/usuarios" element={<UserManagementScreen />} />
                     <Route path="/carreras" element={<CareerManagementScreen />} />
                     <Route path="/sugerencias" element={<SuggestionsScreen />} />
+                    <Route path="/chat" element={<AdminChatScreen />} />
+                    <Route path="/chat/:id" element={<ChatDetailScreen />} />
                     <Route path="/notificaciones-globales" element={<GlobalNotificationsScreen />} />
                     <Route path="/calendario-academico" element={<AcademicCalendarScreen />} />
+                    <Route path="/perfil" element={<AdminProfileScreen />} />
                     <Route path="/configuracion" element={<SettingsScreen />} />
                     <Route path="*" element={<Navigate to="/inicio" />} />
                 </Routes>
             </AdminLayout>
+        );
+    }
+
+    if (user.role === UserRole.PROFESSOR) {
+        return (
+            <ProfessorLayout>
+                <Routes>
+                    <Route path="/" element={<Navigate to="/inicio" replace />} />
+                    <Route path="/inicio" element={<ProfessorDashboardScreen />} />
+                    <Route path="/asistencia" element={<ProfessorAttendanceScreen />} />
+                    <Route path="/cursos" element={<ProfessorCoursesScreen />} />
+                    <Route path="/cursos/:subjectId" element={<ProfessorCourseDetailScreen />} />
+                    <Route path="/notificaciones" element={<ProfessorNotificationsScreen />} />
+                    <Route path="/chat" element={<ProfessorChatScreen />} />
+                    <Route path="/chat/:id" element={<ChatDetailScreen />} />
+                    <Route path="/calendario" element={<ProfessorCalendarScreen />} />
+                    <Route path="/sugerencias" element={<ProfessorSuggestionsScreen />} />
+                    <Route path="/perfil" element={<ProfessorProfileScreen />} />
+                    <Route path="*" element={<Navigate to="/inicio" />} />
+                </Routes>
+            </ProfessorLayout>
         );
     }
 

@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { mockApiService, students } from '../../services/mockData';
-import { ConversationListItem, Student, User } from '../../types';
+import { mockApiService } from '../../services/mockData';
+import { ConversationListItem, User } from '../../types';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Icon from '../../components/common/Icon';
 import CreateGroupModal from '../../components/chat/CreateGroupModal';
 
-const PreceptorChatScreen: React.FC = () => {
+const AdminChatScreen: React.FC = () => {
     const { user } = useAuth();
     const [conversations, setConversations] = useState<ConversationListItem[]>([]);
     const [isDirectChatModalOpen, setIsDirectChatModalOpen] = useState(false);
@@ -16,24 +16,25 @@ const PreceptorChatScreen: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate();
 
-    const refreshConversations = () => {
+    const allUsers = useMemo(() => {
+        if (!user) return [];
+        return mockApiService.getAllUsers().filter(u => u.id !== user.id);
+    }, [user]);
+
+    useEffect(() => {
         if (user) {
             setConversations(mockApiService.getConversations(user.id));
         }
-    };
-
-    useEffect(() => {
-        refreshConversations();
     }, [user]);
 
-    const handleStartNewChat = (student: Student) => {
-        if(!user) return;
-        const newConvo = mockApiService.getOrCreateConversation(user.id, student.id);
+    const handleStartNewChat = (otherUser: User) => {
+        if (!user) return;
+        const newConvo = mockApiService.getOrCreateConversation(user.id, otherUser.id);
         setIsDirectChatModalOpen(false);
         setSearchTerm('');
         navigate(`/chat/${newConvo.id}`);
     };
-    
+
     const handleCreateGroup = (groupName: string, participantIds: string[]) => {
         if (!user) return;
         const newGroup = mockApiService.createGroup(groupName, participantIds, user.id);
@@ -41,9 +42,8 @@ const PreceptorChatScreen: React.FC = () => {
         navigate(`/chat/${newGroup.id}`);
     };
 
-
-    const filteredStudents = students.filter(s =>
-        s.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredUsers = allUsers.filter(u =>
+        u.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
@@ -52,13 +52,13 @@ const PreceptorChatScreen: React.FC = () => {
                 <h1 className="text-3xl font-bold text-brand-text">Chat</h1>
                 <div className="flex gap-2">
                     <Button onClick={() => setIsDirectChatModalOpen(true)} variant="secondary">
-                         <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2">
                             <Icon name="chat" className="w-5 h-5" />
-                            <span>Chat Alumno</span>
+                            <span>Nuevo Chat</span>
                         </div>
                     </Button>
                     <Button onClick={() => setIsGroupModalOpen(true)}>
-                         <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2">
                             <Icon name="users" className="w-5 h-5" />
                             <span>Crear Grupo</span>
                         </div>
@@ -66,7 +66,7 @@ const PreceptorChatScreen: React.FC = () => {
                 </div>
             </div>
             <Card>
-                 <div className="divide-y divide-gray-200">
+                <div className="divide-y divide-gray-200">
                     {conversations.length > 0 ? conversations.map(convo => (
                         <div key={convo.id} onClick={() => navigate(`/chat/${convo.id}`)} className="p-4 hover:bg-gray-50 cursor-pointer">
                             <div className="flex justify-between items-center">
@@ -89,7 +89,7 @@ const PreceptorChatScreen: React.FC = () => {
             {isDirectChatModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" onClick={() => { setIsDirectChatModalOpen(false); setSearchTerm(''); }}>
                     <Card className="w-11/12 max-w-lg flex flex-col" onClick={e => e.stopPropagation()}>
-                        <h2 className="text-2xl font-bold text-brand-text mb-4">Iniciar chat con un alumno</h2>
+                        <h2 className="text-2xl font-bold text-brand-text mb-4">Iniciar chat con un usuario</h2>
                         <input
                             type="text"
                             placeholder="Buscar por nombre..."
@@ -99,19 +99,19 @@ const PreceptorChatScreen: React.FC = () => {
                             autoFocus
                         />
                         <div className="space-y-2 max-h-80 overflow-y-auto">
-                            {filteredStudents.length > 0 ? filteredStudents.map(s => (
-                                <div key={s.id} onClick={() => handleStartNewChat(s)} className="p-3 hover:bg-gray-100 cursor-pointer rounded-lg">
-                                    <p className="font-semibold text-brand-text">{s.name}</p>
-                                    <p className="text-sm text-gray-500">{s.careers.join(', ')} - {s.year}° Año</p>
+                            {filteredUsers.length > 0 ? filteredUsers.map(u => (
+                                <div key={u.id} onClick={() => handleStartNewChat(u)} className="p-3 hover:bg-gray-100 cursor-pointer rounded-lg">
+                                    <p className="font-semibold text-brand-text">{u.name}</p>
+                                    <p className="text-sm text-gray-500 capitalize">{u.role}</p>
                                 </div>
                             )) : (
-                                <p className="text-center text-gray-500 p-4">No se encontraron alumnos.</p>
+                                <p className="text-center text-gray-500 p-4">No se encontraron usuarios.</p>
                             )}
                         </div>
                     </Card>
                 </div>
             )}
-            
+
             {user && <CreateGroupModal
                 isOpen={isGroupModalOpen}
                 onClose={() => setIsGroupModalOpen(false)}
@@ -122,4 +122,4 @@ const PreceptorChatScreen: React.FC = () => {
     );
 };
 
-export default PreceptorChatScreen;
+export default AdminChatScreen;

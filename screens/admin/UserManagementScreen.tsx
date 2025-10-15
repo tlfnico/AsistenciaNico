@@ -1,9 +1,9 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, ReactNode } from 'react';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Icon from '../../components/common/Icon';
 import { mockApiService } from '../../services/mockData';
-import { User, UserRole, Student, Preceptor, Admin, Career } from '../../types';
+import { User, UserRole, Student, Preceptor, Admin } from '../../types';
 
 const getRoleBadge = (role: UserRole) => {
     switch(role) {
@@ -131,6 +131,50 @@ const InputField: React.FC<{label: string, name: string, value: string, onChange
     </div>
 );
 
+const ProfileInfoRow: React.FC<{ label: string; value: string | number | ReactNode }> = ({ label, value }) => (
+    <div className="py-3 sm:grid sm:grid-cols-3 sm:gap-4">
+        <dt className="text-sm font-medium text-gray-500">{label}</dt>
+        <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{value}</dd>
+    </div>
+);
+
+const UserDetailModal: React.FC<{ user: User | null, onClose: () => void }> = ({ user, onClose }) => {
+    if (!user) return null;
+
+    const student = user as Student;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" onClick={onClose}>
+            <Card className="w-11/12 max-w-lg" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <h3 className="text-2xl font-bold text-brand-text">{user.name}</h3>
+                        <div className="mt-1">{getRoleBadge(user.role)}</div>
+                    </div>
+                    <button onClick={onClose} className="text-gray-500 hover:text-gray-800 text-3xl leading-none">&times;</button>
+                </div>
+                
+                <div className="mt-6 border-t border-gray-200">
+                    <dl className="divide-y divide-gray-200">
+                        <ProfileInfoRow label="Email" value={user.email} />
+                        {user.role === UserRole.STUDENT && (
+                            <>
+                                <ProfileInfoRow label="DNI" value={student.dni} />
+                                <ProfileInfoRow label="Carrera/s" value={student.careers.join(', ')} />
+                                <ProfileInfoRow label="Año" value={`${student.year}° Año`} />
+                            </>
+                        )}
+                    </dl>
+                </div>
+
+                <div className="mt-6 flex justify-end">
+                    <Button variant="secondary" onClick={onClose}>Cerrar</Button>
+                </div>
+            </Card>
+        </div>
+    );
+};
+
 
 const UserManagementScreen: React.FC = () => {
     const [allUsers, setAllUsers] = useState(() => mockApiService.getAllUsers());
@@ -138,6 +182,8 @@ const UserManagementScreen: React.FC = () => {
     const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
+    const [viewingUser, setViewingUser] = useState<User | null>(null);
+
 
     const refreshUsers = () => {
         setAllUsers(mockApiService.getAllUsers());
@@ -171,8 +217,15 @@ const UserManagementScreen: React.FC = () => {
                 if (roleFilter !== 'all' && user.role !== roleFilter) {
                     return false;
                 }
-                if (searchTerm && !user.name.toLowerCase().includes(searchTerm.toLowerCase())) {
-                    return false;
+                if (searchTerm) {
+                    const lowerCaseSearchTerm = searchTerm.toLowerCase();
+                    const nameMatch = user.name.toLowerCase().includes(lowerCaseSearchTerm);
+                    
+                    const dniMatch = user.role === UserRole.STUDENT && (user as Student).dni?.includes(searchTerm);
+
+                    if (!nameMatch && !dniMatch) {
+                        return false;
+                    }
                 }
                 return true;
             });
@@ -186,7 +239,7 @@ const UserManagementScreen: React.FC = () => {
                 <div className="flex flex-col md:flex-row gap-4 mb-4">
                     <input
                         type="text"
-                        placeholder="Buscar por nombre..."
+                        placeholder="Buscar por nombre o DNI..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="flex-grow border-gray-300 rounded-md shadow-sm p-2"
@@ -221,7 +274,7 @@ const UserManagementScreen: React.FC = () => {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {filteredUsers.map((user) => (
-                                <tr key={user.id}>
+                                <tr key={user.id} onClick={() => setViewingUser(user)} className="hover:bg-gray-50 cursor-pointer">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm font-medium text-gray-900">{user.name}</div>
                                     </td>
@@ -232,7 +285,7 @@ const UserManagementScreen: React.FC = () => {
                                         {getRoleBadge(user.role)}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <div className="flex justify-end items-center gap-4">
+                                        <div className="flex justify-end items-center gap-4" onClick={e => e.stopPropagation()}>
                                             <button onClick={() => handleOpenModal(user)} className="text-brand-primary hover:text-brand-accent"><Icon name="edit" className="w-5 h-5" /></button>
                                             <button onClick={() => handleDelete(user.id)} className="text-red-600 hover:text-red-800"><Icon name="delete" className="w-5 h-5" /></button>
                                         </div>
@@ -248,6 +301,7 @@ const UserManagementScreen: React.FC = () => {
             </Card>
 
             {isModalOpen && <UserFormModal user={editingUser} onClose={handleCloseModal} onSave={handleSave} />}
+            <UserDetailModal user={viewingUser} onClose={() => setViewingUser(null)} />
         </div>
     );
 };

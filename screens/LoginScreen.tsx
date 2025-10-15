@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { useAuth } from '../hooks/useAuth';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
-import { students, preceptors, admins } from '../services/mockData';
+import { students, preceptors, admins, professors } from '../services/mockData';
 
 const LoginScreen: React.FC = () => {
     const { login } = useAuth();
@@ -27,6 +26,14 @@ const LoginScreen: React.FC = () => {
                         aria-label={`Ingresar como ${students[0].name}`}
                     >
                         Prototipo Alumno
+                    </Button>
+                     <Button 
+                        onClick={() => handleLogin(professors[0].email)} 
+                        variant="success" 
+                        className="w-full !py-4 !text-lg"
+                        aria-label={`Ingresar como ${professors[0].name}`}
+                    >
+                        Prototipo Profesor
                     </Button>
                     <Button 
                         onClick={() => handleLogin(preceptors[0].email)} 

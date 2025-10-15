@@ -1,4 +1,4 @@
-import { Student, Preceptor, UserRole, AttendanceRecord, AttendanceStatus, Notification, NotificationCategory, Message, Conversation, CalendarEvent, CalendarEventType, User, Note, Admin, Career, Subject, SuggestionComplaint, SuggestionComplaintType, SuggestionComplaintStatus } from '../types';
+import { Student, Preceptor, UserRole, AttendanceRecord, AttendanceStatus, Notification, NotificationCategory, Message, Conversation, CalendarEvent, CalendarEventType, User, Note, Admin, Career, Subject, SuggestionComplaint, SuggestionComplaintType, SuggestionComplaintStatus, Professor, ConversationListItem } from '../types';
 
 export const students: Student[] = [
     { id: 's1', name: 'Juan Perez', email: 'juan.perez@email.com', role: UserRole.STUDENT, dni: '12345678', careers: ['Ingeniería en Sistemas', 'Licenciatura en Física'], year: 3 },
@@ -34,49 +34,57 @@ export const preceptors: Preceptor[] = [
     { id: 'p3', name: 'Marta Diaz', email: 'marta.diaz@email.com', role: UserRole.PRECEPTOR },
 ];
 
+export const professors: Professor[] = [
+    { id: 'prof1', name: 'Dr. Alan Turing', email: 'alan.turing@email.com', role: UserRole.PROFESSOR, subjects: ['s1-3', 's1-4'] },
+    { id: 'prof2', name: 'Dra. Ada Lovelace', email: 'ada.lovelace@email.com', role: UserRole.PROFESSOR, subjects: ['s1-1', 's1-5'] },
+    { id: 'prof3', name: 'Dr. Albert Einstein', email: 'albert.einstein@email.com', role: UserRole.PROFESSOR, subjects: ['s1-6', 's4-1', 's4-2', 's4-3'] },
+    { id: 'prof4', name: 'Dra. Marie Curie', email: 'marie.curie@email.com', role: UserRole.PROFESSOR, subjects: ['s2-1', 's2-2'] },
+    { id: 'prof5', name: 'Dr. Peter Drucker', email: 'peter.drucker@email.com', role: UserRole.PROFESSOR, subjects: ['s3-1', 's3-2', 's3-3'] },
+];
+
 export const admins: Admin[] = [
     { id: 'adm1', name: 'Admin General', email: 'admin@email.com', role: UserRole.ADMIN },
 ];
 
-export let users: (Student | Preceptor | Admin)[] = [...students, ...preceptors, ...admins];
+export let users: (Student | Preceptor | Admin | Professor)[] = [...students, ...preceptors, ...admins, ...professors];
 
 export let careers: Career[] = [
     { 
         id: 'c1', 
         name: 'Ingeniería en Sistemas', 
         subjects: [
-            { id: 's1-1', name: 'Programación I', year: 1 },
+            { id: 's1-1', name: 'Programación I', year: 1, professorId: 'prof2' },
             { id: 's1-2', name: 'Análisis Matemático I', year: 1 },
-            { id: 's1-3', name: 'Sistemas Operativos', year: 2 },
-            { id: 's1-4', name: 'Base de Datos', year: 2 },
-            { id: 's1-5', name: 'Análisis Matemático III', year: 3 },
-            { id: 's1-6', name: 'Física II', year: 3 },
+            { id: 's1-3', name: 'Sistemas Operativos', year: 2, professorId: 'prof1' },
+            { id: 's1-4', name: 'Base de Datos', year: 2, professorId: 'prof1' },
+            { id: 's1-5', name: 'Análisis Matemático III', year: 3, professorId: 'prof2' },
+            { id: 's1-6', name: 'Física II', year: 3, professorId: 'prof3' },
         ] 
     },
     { 
         id: 'c2', 
         name: 'Ingeniería Química', 
         subjects: [
-            { id: 's2-1', name: 'Química General', year: 1 },
-            { id: 's2-2', name: 'Química Orgánica', year: 2 },
+            { id: 's2-1', name: 'Química General', year: 1, professorId: 'prof4' },
+            { id: 's2-2', name: 'Química Orgánica', year: 2, professorId: 'prof4' },
         ] 
     },
     { 
         id: 'c3', 
         name: 'Licenciatura en Administración', 
         subjects: [
-            { id: 's3-1', name: 'Introducción a la Administración', year: 1 },
-            { id: 's3-2', name: 'Administración I', year: 1 },
-            { id: 's3-3', name: 'Contabilidad', year: 2},
+            { id: 's3-1', name: 'Introducción a la Administración', year: 1, professorId: 'prof5' },
+            { id: 's3-2', name: 'Administración I', year: 1, professorId: 'prof5' },
+            { id: 's3-3', name: 'Contabilidad', year: 2, professorId: 'prof5'},
         ] 
     },
     { 
         id: 'c4', 
         name: 'Licenciatura en Física', 
         subjects: [
-            { id: 's4-1', name: 'Física I', year: 1 },
-            { id: 's4-2', name: 'Física Cuántica I', year: 3 },
-            { id: 's4-3', name: 'Mecánica Clásica Avanzada', year: 3 },
+            { id: 's4-1', name: 'Física I', year: 1, professorId: 'prof3' },
+            { id: 's4-2', name: 'Física Cuántica I', year: 3, professorId: 'prof3' },
+            { id: 's4-3', name: 'Mecánica Clásica Avanzada', year: 3, professorId: 'prof3' },
         ] 
     }
 ];
@@ -183,22 +191,40 @@ export let notifications: Notification[] = [
     { id: 'n4', title: 'Recordatorio: Encuesta Estudiantil', description: 'Recuerda completar la encuesta de fin de semestre antes del 1 de Agosto.', category: NotificationCategory.ACADEMIC, date: '2024-07-20' },
 ];
 
+export let conversations: Conversation[] = [
+    // 1-on-1 conversations
+    { id: 's1-p1', isGroup: false, participants: ['s1', 'p1'] },
+    { id: 's2-p1', isGroup: false, participants: ['s2', 'p1'] },
+    { id: 's3-p2', isGroup: false, participants: ['s3', 'p2'] },
+    // Group conversations
+    { id: 'g1', isGroup: true, name: 'Proyecto Final - Base de Datos', participants: ['s1', 's2', 's4', 'prof1'] },
+    { id: 'g2', isGroup: true, name: 'Preceptores', participants: ['p1', 'p2', 'p3'] },
+];
+
 export let messages: Message[] = [
-    // Juan Perez and Laura Martinez conversation
-    { id: 'm1', senderId: 's1', receiverId: 'p1', text: 'Hola, quería consultar sobre mi última inasistencia.', timestamp: '2024-07-22T10:00:00Z', readTimestamp: '2024-07-22T10:01:00Z' },
-    { id: 'm2', senderId: 'p1', receiverId: 's1', text: 'Hola Juan, fue en la clase de Análisis Matemático. ¿Necesitas el justificativo?', timestamp: '2024-07-22T10:05:00Z', readTimestamp: '2024-07-23T08:14:00Z' },
-    { id: 'm6', senderId: 's1', receiverId: 'p1', text: 'Sí, por favor. Lo presentaré mañana. ¿Me podrías indicar los temas que se vieron en esa clase de Física II que falté?', timestamp: '2024-07-23T08:15:00Z', readTimestamp: '2024-07-23T08:18:00Z' },
-    { id: 'm7', senderId: 'p1', receiverId: 's1', text: 'Claro, se vieron los capítulos 3 y 4. Te recomiendo pedirle los apuntes a un compañero. El justificativo te lo dejo en preceptoría.', timestamp: '2024-07-23T08:20:00Z', readTimestamp: null },
+    // Juan Perez and Laura Martinez conversation (s1-p1)
+    { id: 'm1', senderId: 's1', conversationId: 's1-p1', text: 'Hola, quería consultar sobre mi última inasistencia.', timestamp: '2024-07-22T10:00:00Z', readBy: ['s1', 'p1'] },
+    { id: 'm2', senderId: 'p1', conversationId: 's1-p1', text: 'Hola Juan, fue en la clase de Análisis Matemático. ¿Necesitas el justificativo?', timestamp: '2024-07-22T10:05:00Z', readBy: ['s1', 'p1'] },
+    { id: 'm6', senderId: 's1', conversationId: 's1-p1', text: 'Sí, por favor. Lo presentaré mañana. ¿Me podrías indicar los temas que se vieron en esa clase de Física II que falté?', timestamp: '2024-07-23T08:15:00Z', readBy: ['s1', 'p1'] },
+    { id: 'm7', senderId: 'p1', conversationId: 's1-p1', text: 'Claro, se vieron los capítulos 3 y 4. Te recomiendo pedirle los apuntes a un compañero. El justificativo te lo dejo en preceptoría.', timestamp: '2024-07-23T08:20:00Z', readBy: ['s1'] },
 
-    // Maria Garcia and Laura Martinez conversation
-    { id: 'm3', senderId: 's2', receiverId: 'p1', text: 'Buen día Laura. ¿Podrías confirmarme la fecha del próximo parcial de Análisis?', timestamp: '2024-07-21T09:00:00Z', readTimestamp: '2024-07-21T09:05:00Z' },
-    { id: 'm8', senderId: 'p1', receiverId: 's2', text: 'Hola María, el parcial es el 5 de Agosto. Está agendado en el calendario de la app también.', timestamp: '2024-07-21T09:10:00Z', readTimestamp: '2024-07-21T09:11:00Z' },
-    { id: 'm9', senderId: 's2', receiverId: 'p1', text: '¡Genial, muchas gracias!', timestamp: '2024-07-21T09:12:00Z', readTimestamp: null },
+    // Maria Garcia and Laura Martinez conversation (s2-p1)
+    { id: 'm3', senderId: 's2', conversationId: 's2-p1', text: 'Buen día Laura. ¿Podrías confirmarme la fecha del próximo parcial de Análisis?', timestamp: '2024-07-21T09:00:00Z', readBy: ['s2', 'p1'] },
+    { id: 'm8', senderId: 'p1', conversationId: 's2-p1', text: 'Hola María, el parcial es el 5 de Agosto. Está agendado en el calendario de la app también.', timestamp: '2024-07-21T09:10:00Z', readBy: ['s2', 'p1'] },
+    { id: 'm9', senderId: 's2', conversationId: 's2-p1', text: '¡Genial, muchas gracias!', timestamp: '2024-07-21T09:12:00Z', readBy: ['s2'] },
 
+    // Carlos Lopez and Roberto Sanchez conversation (s3-p2)
+    { id: 'm4', senderId: 's3', conversationId: 's3-p2', text: 'Hola Roberto, ¿cómo estás?', timestamp: '2024-07-23T11:00:00Z', readBy: ['s3', 'p2'] },
+    { id: 'm5', senderId: 'p2', conversationId: 's3-p2', text: '¡Hola Carlos! Todo bien por aquí. ¿Necesitas algo?', timestamp: '2024-07-23T11:01:00Z', readBy: ['s3'] },
 
-    // Carlos Lopez and Roberto Sanchez conversation
-    { id: 'm4', senderId: 's3', receiverId: 'p2', text: 'Hola Roberto, ¿cómo estás?', timestamp: '2024-07-23T11:00:00Z', readTimestamp: '2024-07-23T11:00:30Z' },
-    { id: 'm5', senderId: 'p2', receiverId: 's3', text: '¡Hola Carlos! Todo bien por aquí. ¿Necesitas algo?', timestamp: '2024-07-23T11:01:00Z', readTimestamp: null },
+    // Group messages for g1
+    { id: 'gm1', senderId: 'prof1', conversationId: 'g1', text: 'Hola equipo, ¿cómo van con el avance del proyecto final?', timestamp: '2024-07-23T14:00:00Z', readBy: ['s1', 's4', 'prof1'] },
+    { id: 'gm2', senderId: 's1', conversationId: 'g1', text: 'Hola profe! Yo estoy terminando la sección del DER.', timestamp: '2024-07-23T14:02:00Z', readBy: ['s1', 's4', 'prof1'] },
+    { id: 'gm3', senderId: 's2', conversationId: 'g1', text: 'Yo tengo algunas dudas con las consultas SQL, ¿podemos hacer una reunión?', timestamp: '2024-07-23T14:03:00Z', readBy: ['s2', 'prof1'] },
+    { id: 'gm4', senderId: 'prof1', conversationId: 'g1', text: 'Claro María, mañana a las 10hs les parece bien?', timestamp: '2024-07-23T14:05:00Z', readBy: ['prof1'] },
+
+    // Group messages for g2
+    { id: 'gm5', senderId: 'p1', conversationId: 'g2', text: 'Colegas, recuerden que el viernes es el cierre de actas.', timestamp: '2024-07-24T09:00:00Z', readBy: ['p1', 'p2'] },
 ];
 
 export let calendarEvents: CalendarEvent[] = [
@@ -259,10 +285,10 @@ export let calendarEvents: CalendarEvent[] = [
 ];
 
 export let notes: Note[] = [
-    { id: 'note1', userId: 's1', text: 'Estudiar para el parcial de Física II, temas 1 a 4.', lastUpdated: '2024-07-28T10:00:00Z' },
-    { id: 'note2', userId: 's1', text: 'Recordar pedir el justificativo de inasistencia en preceptoría.', lastUpdated: '2024-07-27T15:30:00Z' },
-    { id: 'note3', userId: 'p1', text: 'Preparar listados para las mesas de examen de Agosto.', lastUpdated: '2024-07-29T09:00:00Z' },
-    { id: 'note4', userId: 'p1', text: 'Contactar a los alumnos con bajo rendimiento en Física II.', lastUpdated: '2024-07-29T11:00:00Z' },
+    { id: 'note1', userId: 's1', text: 'Estudiar para el parcial de Física II, temas 1 a 4.', date: '2024-08-04', lastUpdated: '2024-07-28T10:00:00Z' },
+    { id: 'note2', userId: 's1', text: 'Recordar pedir el justificativo de inasistencia en preceptoría.', date: '2024-07-30', lastUpdated: '2024-07-27T15:30:00Z' },
+    { id: 'note3', userId: 'p1', text: 'Preparar listados para las mesas de examen de Agosto.', date: '2024-08-01', lastUpdated: '2024-07-29T09:00:00Z' },
+    { id: 'note4', userId: 'p1', text: 'Contactar a los alumnos con bajo rendimiento en Física II.', date: '2024-08-05', lastUpdated: '2024-07-29T11:00:00Z' },
 ];
 
 export let suggestionsComplaints: SuggestionComplaint[] = [
@@ -277,7 +303,7 @@ export const mockApiService = {
     login: (email: string): User | null => {
         return users.find(u => u.email === email) || null;
     },
-    getAllUsers: (): (Student | Preceptor | Admin)[] => {
+    getAllUsers: (): (Student | Preceptor | Admin | Professor)[] => {
         return [...users];
     },
     addUser: (user: Omit<User, 'id'>) => {
@@ -318,6 +344,38 @@ export const mockApiService = {
     getSubjectsForCareer: (careerName: string): string[] => {
         const career = careers.find(c => c.name === careerName);
         return career ? career.subjects.map(s => s.name) : [];
+    },
+    getSubjectsByProfessor: (professorId: string): (Subject & { careerName: string })[] => {
+        const profSubjects: (Subject & { careerName: string })[] = [];
+        careers.forEach(career => {
+            career.subjects.forEach(subject => {
+                if (subject.professorId === professorId) {
+                    profSubjects.push({ ...subject, careerName: career.name });
+                }
+            });
+        });
+        return profSubjects;
+    },
+    getStudentsBySubject: (subjectName: string): Student[] => {
+        let targetCareer: Career | undefined;
+        let targetSubject: Subject | undefined;
+        
+        for (const career of careers) {
+            const foundSubject = career.subjects.find(s => s.name === subjectName);
+            if (foundSubject) {
+                targetCareer = career;
+                targetSubject = foundSubject;
+                break;
+            }
+        }
+
+        if (!targetCareer || !targetSubject) {
+            return [];
+        }
+
+        return students.filter(s => 
+            s.careers.includes(targetCareer!.name) && s.year === targetSubject!.year
+        );
     },
     getStudentAttendance: (studentId: string): AttendanceRecord[] => {
         // If studentId is empty, return all records (for preceptor dashboard)
@@ -360,44 +418,124 @@ export const mockApiService = {
         };
         notifications.unshift(newNotification);
     },
-    getConversations: (userId: string): Conversation[] => {
-        const userConversations: { [key: string]: Message } = {};
-        messages
-            .filter(m => m.senderId === userId || m.receiverId === userId)
-            .forEach(m => {
-                const otherParticipantId = m.senderId === userId ? m.receiverId : m.senderId;
-                if (!userConversations[otherParticipantId] || new Date(m.timestamp) > new Date(userConversations[otherParticipantId].timestamp)) {
-                    userConversations[otherParticipantId] = m;
-                }
-            });
-
-        return Object.keys(userConversations).map(otherId => ({
-            id: otherId,
-            participant: users.find(u => u.id === otherId) as User,
-            lastMessage: userConversations[otherId],
-        })).sort((a, b) => new Date(b.lastMessage.timestamp).getTime() - new Date(a.lastMessage.timestamp).getTime());
+    getUserById: (userId: string): User | undefined => {
+        return users.find(u => u.id === userId);
     },
-    getMessages: (userId1: string, userId2: string): Message[] => {
+    getConversationDetails: (conversationId: string): Conversation | undefined => {
+        return conversations.find(c => c.id === conversationId);
+    },
+    getConversations: (userId: string): ConversationListItem[] => {
+        const userConversations = conversations.filter(c => c.participants.includes(userId));
+
+        const listItems = userConversations.map(convo => {
+            const lastMessage = messages
+                .filter(m => m.conversationId === convo.id)
+                .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+
+            let name = 'Chat Grupal';
+            if (convo.isGroup) {
+                name = convo.name || 'Grupo sin nombre';
+            } else {
+                const otherParticipantId = convo.participants.find(p => p !== userId);
+                const otherParticipant = users.find(u => u.id === otherParticipantId);
+                name = otherParticipant?.name || 'Usuario desconocido';
+            }
+
+            return {
+                id: convo.id,
+                name,
+                isGroup: convo.isGroup,
+                lastMessage,
+            };
+        });
+        
+        return listItems.sort((a, b) => {
+            if (!a.lastMessage) return 1;
+            if (!b.lastMessage) return -1;
+            return new Date(b.lastMessage.timestamp).getTime() - new Date(a.lastMessage.timestamp).getTime();
+        });
+    },
+    getMessages: (conversationId: string): Message[] => {
         return messages
-            .filter(m => (m.senderId === userId1 && m.receiverId === userId2) || (m.senderId === userId2 && m.receiverId === userId1))
+            .filter(m => m.conversationId === conversationId)
             .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
     },
-    sendMessage: (senderId: string, receiverId: string, text: string) => {
+    sendMessage: (senderId: string, conversationId: string, text: string) => {
         const newMessage: Message = {
             id: `m${Date.now()}`,
             senderId,
-            receiverId,
+            conversationId,
             text,
             timestamp: new Date().toISOString(),
-            readTimestamp: null
+            readBy: [senderId],
         };
         messages.push(newMessage);
         return newMessage;
     },
-    markMessagesAsRead: (readerId: string, senderId: string) => {
+    getOrCreateConversation: (participant1Id: string, participant2Id: string): Conversation => {
+        const participantIds = [participant1Id, participant2Id].sort();
+        const existingConvo = conversations.find(c => 
+            !c.isGroup && 
+            c.participants.length === 2 &&
+            c.participants.slice().sort().join('-') === participantIds.join('-')
+        );
+
+        if (existingConvo) {
+            return existingConvo;
+        }
+
+        const newConvo: Conversation = {
+            id: participantIds.join('-'),
+            isGroup: false,
+            participants: participantIds
+        };
+        conversations.push(newConvo);
+        return newConvo;
+    },
+    getOrCreateSubjectGroup: (subjectId: string, subjectName: string, professorId: string): Conversation => {
+        const conversationId = `group-subject-${subjectId}`;
+        const existingConvo = conversations.find(c => c.id === conversationId);
+
+        if (existingConvo) {
+            return existingConvo;
+        }
+        
+        const subjectStudents = mockApiService.getStudentsBySubject(subjectName);
+        const studentIds = subjectStudents.map(s => s.id);
+        const professor = mockApiService.getUserById(professorId);
+
+        const newGroup: Conversation = {
+            id: conversationId,
+            isGroup: true,
+            name: `Grupo - ${subjectName}`,
+            participants: [...new Set([professorId, ...studentIds])],
+        };
+        conversations.push(newGroup);
+        
+        const creatorName = professor?.name || 'El profesor';
+        mockApiService.sendMessage('system', newGroup.id, `${creatorName} creó el grupo del curso "${subjectName}".`);
+        return newGroup;
+    },
+    createGroup: (groupName: string, participantIds: string[], creatorId: string): Conversation => {
+        const creator = mockApiService.getUserById(creatorId);
+        const finalParticipants = [...new Set([creatorId, ...participantIds])];
+
+        const newGroup: Conversation = {
+            id: `group-${Date.now()}`,
+            isGroup: true,
+            name: groupName,
+            participants: finalParticipants,
+        };
+        conversations.push(newGroup);
+        
+        const creatorName = creator?.name || 'Usuario';
+        mockApiService.sendMessage('system', newGroup.id, `${creatorName} creó el grupo "${groupName}".`);
+        return newGroup;
+    },
+    markMessagesAsRead: (readerId: string, conversationId: string) => {
         messages.forEach(m => {
-            if (m.receiverId === readerId && m.senderId === senderId && !m.readTimestamp) {
-                m.readTimestamp = new Date().toISOString();
+            if (m.conversationId === conversationId && !m.readBy.includes(readerId)) {
+                m.readBy.push(readerId);
             }
         });
     },
@@ -421,21 +559,23 @@ export const mockApiService = {
         calendarEvents = calendarEvents.filter(e => e.id !== eventId);
     },
     getNotes: (userId: string): Note[] => {
-        return notes.filter(n => n.userId === userId).sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
+        return notes.filter(n => n.userId === userId).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     },
-    addNote: (userId: string, text: string) => {
+    addNote: (userId: string, text: string, date: string) => {
         const newNote: Note = {
             id: `note${Date.now()}`,
             userId,
             text,
+            date,
             lastUpdated: new Date().toISOString()
         };
         notes.push(newNote);
     },
-    updateNote: (noteId: string, text: string) => {
+    updateNote: (noteId: string, text: string, date: string) => {
         const index = notes.findIndex(n => n.id === noteId);
         if (index !== -1) {
             notes[index].text = text;
+            notes[index].date = date;
             notes[index].lastUpdated = new Date().toISOString();
         }
     },

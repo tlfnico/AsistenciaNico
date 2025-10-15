@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { Preceptor } from '../../types';
+import { Admin } from '../../types';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Icon from '../../components/common/Icon';
@@ -13,9 +13,9 @@ const ProfileInfoRow: React.FC<{ label: string; value: string }> = ({ label, val
     </div>
 );
 
-const PreceptorProfileScreen: React.FC = () => {
+const AdminProfileScreen: React.FC = () => {
     const { user, logout } = useAuth();
-    const preceptor = user as Preceptor;
+    const admin = user as Admin;
     const navigate = useNavigate();
 
     const handleLogout = () => {
@@ -29,8 +29,9 @@ const PreceptorProfileScreen: React.FC = () => {
             <Card>
                 <div className="border-t border-gray-200">
                     <dl className="divide-y divide-gray-200">
-                        <ProfileInfoRow label="Nombre Completo" value={preceptor.name} />
-                        <ProfileInfoRow label="Correo Institucional" value={preceptor.email} />
+                        <ProfileInfoRow label="Nombre Completo" value={admin.name} />
+                        <ProfileInfoRow label="Correo Institucional" value={admin.email} />
+                        <ProfileInfoRow label="Rol" value="Administrador" />
                     </dl>
                 </div>
                  <div className="mt-6 flex justify-end">
@@ -44,4 +45,4 @@ const PreceptorProfileScreen: React.FC = () => {
     );
 };
 
-export default PreceptorProfileScreen;
+export default AdminProfileScreen;

@@ -1,22 +1,28 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { Preceptor } from '../../types';
+import { Professor, Subject } from '../../types';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Icon from '../../components/common/Icon';
 import { useNavigate } from 'react-router-dom';
+import { mockApiService } from '../../services/mockData';
 
-const ProfileInfoRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+const ProfileInfoRow: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
     <div className="py-3 sm:grid sm:grid-cols-3 sm:gap-4">
         <dt className="text-sm font-medium text-gray-500">{label}</dt>
         <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{value}</dd>
     </div>
 );
 
-const PreceptorProfileScreen: React.FC = () => {
+const ProfessorProfileScreen: React.FC = () => {
     const { user, logout } = useAuth();
-    const preceptor = user as Preceptor;
     const navigate = useNavigate();
+    const professor = user as Professor;
+
+    const subjects = useMemo(() => {
+        if (!user) return [];
+        return mockApiService.getSubjectsByProfessor(user.id);
+    }, [user]);
 
     const handleLogout = () => {
         logout();
@@ -29,8 +35,16 @@ const PreceptorProfileScreen: React.FC = () => {
             <Card>
                 <div className="border-t border-gray-200">
                     <dl className="divide-y divide-gray-200">
-                        <ProfileInfoRow label="Nombre Completo" value={preceptor.name} />
-                        <ProfileInfoRow label="Correo Institucional" value={preceptor.email} />
+                        <ProfileInfoRow label="Nombre Completo" value={professor.name} />
+                        <ProfileInfoRow label="Correo Institucional" value={professor.email} />
+                        <ProfileInfoRow 
+                            label="Materias a Cargo" 
+                            value={
+                                <ul className="list-disc list-inside space-y-1">
+                                    {subjects.map(s => <li key={s.id}>{s.name} ({s.careerName})</li>)}
+                                </ul>
+                            } 
+                        />
                     </dl>
                 </div>
                  <div className="mt-6 flex justify-end">
@@ -44,4 +58,4 @@ const PreceptorProfileScreen: React.FC = () => {
     );
 };
 
-export default PreceptorProfileScreen;
+export default ProfessorProfileScreen;

@@ -36,8 +36,8 @@ const ProfileScreen: React.FC = () => {
                         <ProfileInfoRow label="Año" value={student.year} />
                     </dl>
                 </div>
-                 <div className="mt-6 md:hidden">
-                    <Button onClick={handleLogout} variant="secondary" className="w-full flex items-center justify-center gap-2">
+                 <div className="mt-6 flex justify-end">
+                    <Button onClick={handleLogout} variant="danger" className="flex items-center justify-center gap-2">
                         <Icon name="logout" className="w-5 h-5" />
                         Cerrar Sesión
                     </Button>
