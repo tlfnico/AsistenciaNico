@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import Card from '../../components/common/Card';
-import { mockApiService } from '../../services/mockData';
+import * as api from '../../services/api';
 import { AttendanceStatus, Notification, NotificationCategory, SuggestionComplaintType } from '../../types';
 import Icon from '../../components/common/Icon';
 import { Link } from 'react-router-dom';
@@ -22,11 +22,13 @@ const FeedbackCard: React.FC = () => {
     const [text, setText] = useState('');
     const [feedback, setFeedback] = useState('');
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!text.trim() || !user) return;
         
-        mockApiService.addSuggestionComplaint({ userId: user.id, type, text });
+        // This function would need to be implemented in api.ts
+        // await api.addSuggestionComplaint({ userId: user.id, type, text });
+        console.log("Feedback submitted (not implemented in API yet)");
         
         setFeedback('¡Gracias por tu opinión!');
         setText('');
@@ -63,19 +65,44 @@ const FeedbackCard: React.FC = () => {
 
 const StudentDashboard: React.FC = () => {
     const { user } = useAuth();
+    const [attendancePercentage, setAttendancePercentage] = useState(0);
+    const [latestNotification, setLatestNotification] = useState<Notification | null>(null);
+    const [loading, setLoading] = useState(true);
 
-    if (!user) return null;
+    useEffect(() => {
+        const fetchData = async () => {
+            if (!user) return;
+            setLoading(true);
+            try {
+                const [attendanceRecords, notifications] = await Promise.all([
+                    api.getStudentAttendance(user.id),
+                    api.getNotifications()
+                ]);
 
-    const attendanceRecords = mockApiService.getStudentAttendance(user.id);
-    const totalClasses = attendanceRecords.length;
-    const presentOrLate = attendanceRecords.filter(r => r.status === AttendanceStatus.PRESENT || r.status === AttendanceStatus.LATE).length;
-    const attendancePercentage = totalClasses > 0 ? Math.round((presentOrLate / totalClasses) * 100) : 100;
+                const totalClasses = attendanceRecords.length;
+                const presentOrLate = attendanceRecords.filter(r => r.status === AttendanceStatus.PRESENT || r.status === AttendanceStatus.LATE).length;
+                setAttendancePercentage(totalClasses > 0 ? Math.round((presentOrLate / totalClasses) * 100) : 100);
+
+                setLatestNotification(notifications[0] || null);
+
+            } catch (error) {
+                console.error("Failed to load dashboard data", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, [user]);
     
     let percentageColor = 'text-green-600';
     if (attendancePercentage < 75) percentageColor = 'text-yellow-600';
     if (attendancePercentage < 50) percentageColor = 'text-red-600';
 
-    const latestNotification = mockApiService.getNotifications()[0];
+    if (loading) {
+        return <div>Cargando...</div>;
+    }
+    
+    if (!user) return null;
 
     return (
         <div className="space-y-6">

@@ -40,8 +40,24 @@ import ProfessorCalendarScreen from './screens/professor/CalendarScreen';
 import ProfessorSuggestionsScreen from './screens/professor/SuggestionsScreen';
 import ProfessorProfileScreen from './screens/professor/ProfileScreen';
 
+// New Imports for Grades and Finals
+import StudentGradesScreen from './screens/student/GradesScreen';
+import StudentFinalsScreen from './screens/student/FinalsScreen';
+import ProfessorGradesScreen from './screens/professor/GradesScreen';
+import ProfessorGradeDetailScreen from './screens/professor/GradeDetailScreen';
+import ProfessorFinalsScreen from './screens/professor/FinalsScreen';
+
+
 const AppRoutes: React.FC = () => {
-    const { user } = useAuth();
+    const { user, loading } = useAuth();
+
+    if (loading) {
+        return (
+             <div className="flex items-center justify-center min-h-screen">
+                <p>Cargando...</p>
+            </div>
+        )
+    }
 
     if (!user) {
         return (
@@ -64,6 +80,8 @@ const AppRoutes: React.FC = () => {
                     <Route path="/chat" element={<StudentChatScreen />} />
                     <Route path="/chat/:id" element={<ChatDetailScreen />} />
                     <Route path="/perfil" element={<StudentProfileScreen />} />
+                    <Route path="/notas" element={<StudentGradesScreen />} />
+                    <Route path="/finales" element={<StudentFinalsScreen />} />
                     <Route path="*" element={<Navigate to="/inicio" />} />
                 </Routes>
             </StudentLayout>
@@ -124,6 +142,9 @@ const AppRoutes: React.FC = () => {
                     <Route path="/calendario" element={<ProfessorCalendarScreen />} />
                     <Route path="/sugerencias" element={<ProfessorSuggestionsScreen />} />
                     <Route path="/perfil" element={<ProfessorProfileScreen />} />
+                    <Route path="/notas" element={<ProfessorGradesScreen />} />
+                    <Route path="/notas/:subjectId" element={<ProfessorGradeDetailScreen />} />
+                    <Route path="/finales" element={<ProfessorFinalsScreen />} />
                     <Route path="*" element={<Navigate to="/inicio" />} />
                 </Routes>
             </ProfessorLayout>

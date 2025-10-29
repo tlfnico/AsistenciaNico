@@ -137,3 +137,29 @@ export interface SuggestionComplaint {
     date: string;
     status: SuggestionComplaintStatus;
 }
+
+// --- NEW TYPES FOR GRADES AND FINALS ---
+
+export interface Grade {
+    id: string;
+    studentId: string;
+    subjectId: string;
+    evaluationType: string; // e.g., 'Parcial 1', 'TP Final'
+    score: number;
+}
+
+export interface FinalExam {
+    id: string;
+    subjectId: string;
+    subjectName: string;
+    professorId: string;
+    date: string;
+    time: string;
+    classroom: string;
+    capacity: number;
+}
+
+export interface FinalEnrollment {
+    finalId: string;
+    studentId: string;
+}

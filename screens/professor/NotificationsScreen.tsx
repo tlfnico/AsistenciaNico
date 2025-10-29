@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { mockApiService } from '../../services/mockData';
-import { Notification, NotificationCategory, Student } from '../../types';
+import { Notification, NotificationCategory } from '../../types';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
-import Icon from '../../components/common/Icon';
 import { useAuth } from '../../hooks/useAuth';
 
 const getCategoryStyles = (category: NotificationCategory) => {
@@ -35,30 +34,43 @@ const ProfessorNotificationsScreen: React.FC = () => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [category, setCategory] = useState<NotificationCategory>(NotificationCategory.ACADEMIC);
+    const [selectedSubjectId, setSelectedSubjectId] = useState('');
     const [feedback, setFeedback] = useState('');
     const [sentNotifications, setSentNotifications] = useState<Notification[]>([]);
     
+    const professorSubjects = useMemo(() => {
+        if (!user) return [];
+        return mockApiService.getSubjectsByProfessor(user.id);
+    }, [user]);
+
     // In a real app, this would be more complex, linking notifications to recipients.
-    // For this prototype, we just add a global notification.
+    // For this prototype, we just add a global notification but scoped by the UI.
     useEffect(() => {
         setSentNotifications(mockApiService.getNotifications().slice(0, 5));
     }, []);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!title || !description) {
-            setFeedback('Por favor, complete todos los campos.');
+        if (!title || !description || !selectedSubjectId) {
+            setFeedback('Por favor, complete todos los campos, incluyendo el curso destinatario.');
             return;
         }
         
-        mockApiService.addNotification({ title, description, category });
+        const subject = professorSubjects.find(s => s.id === selectedSubjectId);
+        const finalTitle = `[${subject?.name}] ${title}`;
+
+        mockApiService.addNotification({ title: finalTitle, description, category });
         setFeedback('¡Notificación enviada con éxito!');
         setTitle('');
         setDescription('');
+        setSelectedSubjectId('');
         setCategory(NotificationCategory.ACADEMIC);
         setSentNotifications(mockApiService.getNotifications().slice(0, 5));
         setTimeout(() => setFeedback(''), 3000);
     };
+
+    const subject = professorSubjects.find(s => s.id === selectedSubjectId);
+    const previewTitle = subject ? `[${subject.name}] ${title}` : title;
 
     return (
         <div className="space-y-6">
@@ -68,6 +80,19 @@ const ProfessorNotificationsScreen: React.FC = () => {
                 <Card>
                     <h2 className="text-xl font-bold text-brand-text mb-4">Crear Notificación</h2>
                     <form onSubmit={handleSubmit} className="space-y-4">
+                        <div>
+                            <label htmlFor="subject" className="block text-sm font-medium text-gray-700">Enviar a</label>
+                            <select
+                                id="subject"
+                                value={selectedSubjectId}
+                                onChange={(e) => setSelectedSubjectId(e.target.value)}
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:border-brand-primary focus:ring-brand-primary"
+                            >
+                                <option value="" disabled>Seleccione un curso</option>
+                                {professorSubjects.map(s => <option key={s.id} value={s.id}>{s.name} ({s.careerName})</option>)}
+                            </select>
+                        </div>
+
                         <InputField label="Título" value={title} onChange={setTitle} />
                         <div>
                             <label htmlFor="description" className="block text-sm font-medium text-gray-700">Descripción</label>
@@ -98,7 +123,7 @@ const ProfessorNotificationsScreen: React.FC = () => {
                 <div className="space-y-6">
                      <Card>
                         <h2 className="text-xl font-bold text-brand-text mb-4">Vista Previa</h2>
-                        <NotificationPreview notification={{ title, description, category }} />
+                        <NotificationPreview notification={{ title: previewTitle, description, category }} />
                     </Card>
                      <Card>
                         <h2 className="text-xl font-bold text-brand-text mb-4">Historial Reciente</h2>

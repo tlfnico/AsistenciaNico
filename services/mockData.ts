@@ -1,4 +1,4 @@
-import { Student, Preceptor, UserRole, AttendanceRecord, AttendanceStatus, Notification, NotificationCategory, Message, Conversation, CalendarEvent, CalendarEventType, User, Note, Admin, Career, Subject, SuggestionComplaint, SuggestionComplaintType, SuggestionComplaintStatus, Professor, ConversationListItem } from '../types';
+import { Student, Preceptor, UserRole, AttendanceRecord, AttendanceStatus, Notification, NotificationCategory, Message, Conversation, CalendarEvent, CalendarEventType, User, Note, Admin, Career, Subject, SuggestionComplaint, SuggestionComplaintType, SuggestionComplaintStatus, Professor, ConversationListItem, Grade, FinalExam, FinalEnrollment } from '../types';
 
 export const students: Student[] = [
     { id: 's1', name: 'Juan Perez', email: 'juan.perez@email.com', role: UserRole.STUDENT, dni: '12345678', careers: ['Ingeniería en Sistemas', 'Licenciatura en Física'], year: 3 },
@@ -297,6 +297,25 @@ export let suggestionsComplaints: SuggestionComplaint[] = [
     { id: 'sc3', userId: 's2', type: SuggestionComplaintType.SUGGESTION, text: 'Podrían agregar mapas de la universidad en la app para los nuevos estudiantes.', date: '2024-07-25', status: SuggestionComplaintStatus.RESOLVED },
 ];
 
+// --- NEW DATA FOR GRADES AND FINALS ---
+export let grades: Grade[] = [
+    { id: 'grd1', studentId: 's1', subjectId: 's1-5', evaluationType: 'Parcial 1', score: 8 },
+    { id: 'grd2', studentId: 's1', subjectId: 's1-5', evaluationType: 'TP 1', score: 9 },
+    { id: 'grd3', studentId: 's2', subjectId: 's1-5', evaluationType: 'Parcial 1', score: 6 },
+    { id: 'grd4', studentId: 's1', subjectId: 's1-6', evaluationType: 'Parcial 1', score: 3 },
+    { id: 'grd5', studentId: 's17', subjectId: 's1-1', evaluationType: 'Parcial 1', score: 7 },
+    { id: 'grd6', studentId: 's18', subjectId: 's1-1', evaluationType: 'Parcial 1', score: 4 },
+];
+
+export let finalExams: FinalExam[] = [
+    { id: 'fin1', subjectId: 's1-5', subjectName: 'Análisis Matemático III', professorId: 'prof2', date: '2024-11-29', time: '09:00', classroom: 'Aula Magna', capacity: 50 },
+    { id: 'fin2', subjectId: 's1-6', subjectName: 'Física II', professorId: 'prof3', date: '2024-12-12', time: '14:00', classroom: '305', capacity: 30 },
+    { id: 'fin3', subjectId: 's1-1', subjectName: 'Programación I', professorId: 'prof2', date: '2024-12-05', time: '09:00', classroom: 'Lab 1', capacity: 25 },
+];
+
+export let finalEnrollments: FinalEnrollment[] = [
+    { finalId: 'fin3', studentId: 's1' },
+];
 
 // Mock API functions
 export const mockApiService = {
@@ -355,6 +374,27 @@ export const mockApiService = {
             });
         });
         return profSubjects;
+    },
+    getStudentsBySubjectId: (subjectId: string): Student[] => {
+        let targetCareer: Career | undefined;
+        let targetSubject: Subject | undefined;
+        
+        for (const career of careers) {
+            const foundSubject = career.subjects.find(s => s.id === subjectId);
+            if (foundSubject) {
+                targetCareer = career;
+                targetSubject = foundSubject;
+                break;
+            }
+        }
+
+        if (!targetCareer || !targetSubject) {
+            return [];
+        }
+
+        return students.filter(s => 
+            s.careers.includes(targetCareer!.name) && s.year === targetSubject!.year
+        );
     },
     getStudentsBySubject: (subjectName: string): Student[] => {
         let targetCareer: Career | undefined;
@@ -532,6 +572,58 @@ export const mockApiService = {
         mockApiService.sendMessage('system', newGroup.id, `${creatorName} creó el grupo "${groupName}".`);
         return newGroup;
     },
+    getOrCreatePreceptorsGroup: (creatorId: string): Conversation => {
+        const conversationId = 'group-all-preceptors';
+        const existingConvo = conversations.find(c => c.id === conversationId);
+
+        if (existingConvo) {
+            if (!existingConvo.participants.includes(creatorId)) {
+                existingConvo.participants.push(creatorId);
+            }
+            return existingConvo;
+        }
+
+        const preceptorIds = users.filter(u => u.role === UserRole.PRECEPTOR).map(p => p.id);
+        const creator = mockApiService.getUserById(creatorId);
+
+        const newGroup: Conversation = {
+            id: conversationId,
+            isGroup: true,
+            name: `Grupo de Preceptores`,
+            participants: [...new Set([...preceptorIds, creatorId])],
+        };
+        conversations.push(newGroup);
+        
+        const creatorName = creator?.name || 'Sistema';
+        mockApiService.sendMessage('system', newGroup.id, `${creatorName} inició el chat con el grupo de Preceptores.`);
+        return newGroup;
+    },
+    getOrCreateProfessorsGroup: (creatorId: string): Conversation => {
+        const conversationId = 'group-all-professors';
+        const existingConvo = conversations.find(c => c.id === conversationId);
+
+        if (existingConvo) {
+            if (!existingConvo.participants.includes(creatorId)) {
+                existingConvo.participants.push(creatorId);
+            }
+            return existingConvo;
+        }
+
+        const professorIds = users.filter(u => u.role === UserRole.PROFESSOR).map(p => p.id);
+        const creator = mockApiService.getUserById(creatorId);
+
+        const newGroup: Conversation = {
+            id: conversationId,
+            isGroup: true,
+            name: `Grupo de Profesores`,
+            participants: [...new Set([...professorIds, creatorId])],
+        };
+        conversations.push(newGroup);
+        
+        const creatorName = creator?.name || 'Sistema';
+        mockApiService.sendMessage('system', newGroup.id, `${creatorName} inició el chat con el grupo de Profesores.`);
+        return newGroup;
+    },
     markMessagesAsRead: (readerId: string, conversationId: string) => {
         messages.forEach(m => {
             if (m.conversationId === conversationId && !m.readBy.includes(readerId)) {
@@ -601,5 +693,86 @@ export const mockApiService = {
         if (index !== -1) {
             suggestionsComplaints[index].status = status;
         }
+    },
+    // --- NEW FUNCTIONS FOR GRADES ---
+    getGradesForStudent: (studentId: string): Grade[] => {
+        return grades.filter(g => g.studentId === studentId);
+    },
+    getGradesBySubject: (subjectId: string): Grade[] => {
+        return grades.filter(g => g.subjectId === subjectId);
+    },
+    addOrUpdateGrade: (grade: Omit<Grade, 'id'> & { id?: string }): void => {
+        const existingIndex = grade.id ? grades.findIndex(g => g.id === grade.id) : -1;
+        if (existingIndex !== -1) {
+            grades[existingIndex] = { ...grades[existingIndex], ...grade };
+        } else {
+            const newGrade: Grade = {
+                id: `grd${Date.now()}`,
+                ...grade
+            };
+            grades.push(newGrade);
+        }
+    },
+    // --- NEW FUNCTIONS FOR FINALS ---
+    getFinalsByProfessor: (professorId: string): FinalExam[] => {
+        return finalExams.filter(f => f.professorId === professorId);
+    },
+    createFinal: (finalData: Omit<FinalExam, 'id'>): void => {
+        const newFinal: FinalExam = {
+            id: `fin${Date.now()}`,
+            ...finalData
+        };
+        finalExams.push(newFinal);
+    },
+    deleteFinal: (finalId: string): void => {
+        finalExams = finalExams.filter(f => f.id !== finalId);
+        // Also remove enrollments for this final
+        finalEnrollments = finalEnrollments.filter(e => e.finalId !== finalId);
+    },
+    getAvailableFinalsForStudent: (student: Student): FinalExam[] => {
+        // Find subjects the student could take based on career and year
+        const studentSubjectIds = careers
+            .filter(c => student.careers.includes(c.name))
+            .flatMap(c => c.subjects)
+            .filter(s => s.year <= student.year) // Can take finals from current or previous years
+            .map(s => s.id);
+
+        const enrolledFinalIds = finalEnrollments
+            .filter(e => e.studentId === student.id)
+            .map(e => e.finalId);
+
+        return finalExams.filter(f => 
+            studentSubjectIds.includes(f.subjectId) && 
+            !enrolledFinalIds.includes(f.id)
+        );
+    },
+    getStudentEnrollments: (studentId: string): FinalExam[] => {
+        const enrolledFinalIds = finalEnrollments
+            .filter(e => e.studentId === studentId)
+            .map(e => e.finalId);
+        return finalExams.filter(f => enrolledFinalIds.includes(f.id));
+    },
+    enrollInFinal: (studentId: string, finalId: string): boolean => {
+        const final = finalExams.find(f => f.id === finalId);
+        if (!final) return false;
+
+        const currentEnrollments = finalEnrollments.filter(e => e.finalId === finalId).length;
+        if (currentEnrollments >= final.capacity) {
+            alert('No hay más cupos para este final.');
+            return false;
+        }
+
+        const isAlreadyEnrolled = finalEnrollments.some(e => e.studentId === studentId && e.finalId === finalId);
+        if (isAlreadyEnrolled) return false;
+
+        finalEnrollments.push({ studentId, finalId });
+        return true;
+    },
+    withdrawFromFinal: (studentId: string, finalId: string): void => {
+        finalEnrollments = finalEnrollments.filter(e => !(e.studentId === studentId && e.finalId === finalId));
+    },
+    getEnrolledStudentsForFinal: (finalId: string): Student[] => {
+        const studentIds = finalEnrollments.filter(e => e.finalId === finalId).map(e => e.studentId);
+        return students.filter(s => studentIds.includes(s.id));
     },
 };

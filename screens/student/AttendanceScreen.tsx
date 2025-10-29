@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { mockApiService } from '../../services/mockData';
+import * as api from '../../services/api';
 import { AttendanceRecord, AttendanceStatus } from '../../types';
 import Card from '../../components/common/Card';
 import AttendanceChart from '../../components/attendance/AttendanceChart';
@@ -53,7 +53,6 @@ const AttendanceCalendar: React.FC<{ records: AttendanceRecord[] }> = ({ records
 
     const handleDayClick = (record: AttendanceRecord | undefined) => {
         if (record) {
-            // If clicking the same record, deselect it (toggle). Otherwise, select the new one.
             setSelectedRecord(prev => prev?.id === record.id ? null : record);
         }
     };
@@ -138,12 +137,24 @@ const AttendanceCalendar: React.FC<{ records: AttendanceRecord[] }> = ({ records
 const StudentAttendanceScreen: React.FC = () => {
     const { user } = useAuth();
     const [records, setRecords] = useState<AttendanceRecord[]>([]);
+    const [loading, setLoading] = useState(true);
     const [selectedSubject, setSelectedSubject] = useState<string>('all');
     
     useEffect(() => {
-        if (user) {
-            setRecords(mockApiService.getStudentAttendance(user.id));
-        }
+        const fetchAttendance = async () => {
+            if (user) {
+                try {
+                    setLoading(true);
+                    const data = await api.getStudentAttendance(user.id);
+                    setRecords(data);
+                } catch (error) {
+                    console.error("Error fetching attendance", error);
+                } finally {
+                    setLoading(false);
+                }
+            }
+        };
+        fetchAttendance();
     }, [user]);
 
     const recordsBySubject = useMemo(() => {
@@ -159,9 +170,6 @@ const StudentAttendanceScreen: React.FC = () => {
     
     const allSubjects = useMemo(() => Object.keys(recordsBySubject).sort(), [recordsBySubject]);
 
-    // Fix: Add an explicit type annotation to `subjectEntriesToRender` to correct type inference.
-    // This ensures each entry is treated as a `[string, AttendanceRecord[]]` tuple,
-    // resolving type errors in the `.map()` loop below.
     const subjectEntriesToRender: [string, AttendanceRecord[]][] = useMemo(() => {
         if (selectedSubject === 'all') {
             return Object.entries(recordsBySubject);
@@ -171,6 +179,10 @@ const StudentAttendanceScreen: React.FC = () => {
         }
         return [];
     }, [recordsBySubject, selectedSubject]);
+
+    if(loading) {
+        return <div>Cargando asistencia...</div>
+    }
 
     return (
         <div className="space-y-6">

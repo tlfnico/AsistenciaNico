@@ -34,7 +34,7 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ isOpen, onClose, on
     
     const handleCareerToggle = (careerName: string, isChecked: boolean) => {
         const newSelectedIds = new Set(selectedIds);
-        const studentsInCareer = mockApiService.getStudentsByCareerAndYear(careerName, 0).filter(s => s.careers.includes(careerName));
+        const studentsInCareer = potentialParticipants.filter(p => p.role === 'student' && (p as Student).careers.includes(careerName));
 
         studentsInCareer.forEach(student => {
             if (isChecked) {
@@ -70,7 +70,7 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ isOpen, onClose, on
     
     // Determine if a career is fully or partially selected
     const getCareerSelectionState = (careerName: string) => {
-        const studentsInCareer = mockApiService.getStudentsByCareerAndYear(careerName, 0).filter(s => s.careers.includes(careerName));
+        const studentsInCareer = potentialParticipants.filter(p => p.role === 'student' && (p as Student).careers.includes(careerName));
         if (studentsInCareer.length === 0) return 'none';
 
         const selectedCount = studentsInCareer.filter(s => selectedIds.has(s.id)).length;

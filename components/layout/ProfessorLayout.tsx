@@ -14,9 +14,10 @@ const navItems: NavItem[] = [
     { path: '/inicio', label: 'Inicio', icon: 'home' },
     { path: '/asistencia', label: 'Asistencia', icon: 'attendance' },
     { path: '/cursos', label: 'Mis Cursos', icon: 'academic-cap' },
+    { path: '/notas', label: 'Notas', icon: 'chart-pie' },
+    { path: '/finales', label: 'Finales', icon: 'calendar' },
     { path: '/notificaciones', label: 'Notificaciones', icon: 'notifications' },
     { path: '/chat', label: 'Chat', icon: 'chat' },
-    { path: '/calendario', label: 'Calendario', icon: 'calendar' },
     { path: '/sugerencias', label: 'Sugerencias', icon: 'chat' },
     { path: '/perfil', label: 'Perfil', icon: 'profile' },
 ];

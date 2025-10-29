@@ -6,13 +6,11 @@ import { ConversationListItem, User } from '../../types';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Icon from '../../components/common/Icon';
-import CreateGroupModal from '../../components/chat/CreateGroupModal';
 
 const AdminChatScreen: React.FC = () => {
     const { user } = useAuth();
     const [conversations, setConversations] = useState<ConversationListItem[]>([]);
     const [isDirectChatModalOpen, setIsDirectChatModalOpen] = useState(false);
-    const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate();
 
@@ -35,10 +33,9 @@ const AdminChatScreen: React.FC = () => {
         navigate(`/chat/${newConvo.id}`);
     };
 
-    const handleCreateGroup = (groupName: string, participantIds: string[]) => {
+    const handleStartPreceptorsChat = () => {
         if (!user) return;
-        const newGroup = mockApiService.createGroup(groupName, participantIds, user.id);
-        setIsGroupModalOpen(false);
+        const newGroup = mockApiService.getOrCreatePreceptorsGroup(user.id);
         navigate(`/chat/${newGroup.id}`);
     };
 
@@ -57,10 +54,10 @@ const AdminChatScreen: React.FC = () => {
                             <span>Nuevo Chat</span>
                         </div>
                     </Button>
-                    <Button onClick={() => setIsGroupModalOpen(true)}>
+                    <Button onClick={handleStartPreceptorsChat}>
                         <div className="flex items-center gap-2">
                             <Icon name="users" className="w-5 h-5" />
-                            <span>Crear Grupo</span>
+                            <span>Chat Preceptores</span>
                         </div>
                     </Button>
                 </div>
@@ -111,13 +108,6 @@ const AdminChatScreen: React.FC = () => {
                     </Card>
                 </div>
             )}
-
-            {user && <CreateGroupModal
-                isOpen={isGroupModalOpen}
-                onClose={() => setIsGroupModalOpen(false)}
-                onCreate={handleCreateGroup}
-                currentUser={user}
-            />}
         </div>
     );
 };

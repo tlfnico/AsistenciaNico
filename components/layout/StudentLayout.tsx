@@ -13,6 +13,8 @@ interface NavItem {
 const navItems: NavItem[] = [
     { path: '/inicio', label: 'Inicio', icon: 'home' },
     { path: '/asistencia', label: 'Asistencia', icon: 'attendance' },
+    { path: '/notas', label: 'Notas', icon: 'chart-pie' },
+    { path: '/finales', label: 'Finales', icon: 'academic-cap' },
     { path: '/notificaciones', label: 'Notificaciones', icon: 'notifications' },
     { path: '/calendario', label: 'Calendario', icon: 'calendar' },
     { path: '/chat', label: 'Chat', icon: 'chat' },
@@ -66,15 +68,15 @@ const StudentLayout: React.FC<{ children: ReactNode }> = ({ children }) => {
             </main>
 
             {/* Bottom Nav for small screens */}
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t border-gray-200 flex justify-around">
-                {navItems.map((item) => (
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t border-gray-200 grid grid-cols-4">
+                 {navItems.slice(0, 4).map((item) => (
                      <NavLink
                         key={item.path}
                         to={item.path}
                         className={({ isActive }) => `${navLinkClasses} w-full ${isActive ? 'text-brand-primary' : 'text-gray-500'}`}
                     >
                         <Icon name={item.icon} className="w-6 h-6 mb-1" />
-                        <span className="text-xs">{item.label}</span>
+                        <span className="text-xs text-center">{item.label}</span>
                     </NavLink>
                 ))}
             </nav>

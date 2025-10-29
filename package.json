@@ -1,5 +1,5 @@
 {
-  "name": "proyecto-asistencia",
+  "name": "copia-pa-normal",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -12,7 +12,8 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.1",
-    "recharts": "^3.2.1"
+    "recharts": "^3.2.1",
+    "@supabase/supabase-js": "latest"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
