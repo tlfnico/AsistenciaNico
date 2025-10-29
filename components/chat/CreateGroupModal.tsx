@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import { User, Career, Student } from '../../types';
-import { mockApiService } from '../../services/mockData';
+import * as api from '../../services/api';
 
 interface CreateGroupModalProps {
     isOpen: boolean;
@@ -15,19 +15,32 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ isOpen, onClose, on
     const [groupName, setGroupName] = useState('');
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [searchTerm, setSearchTerm] = useState('');
-
     const [allCareers, setAllCareers] = useState<Career[]>([]);
     const [potentialParticipants, setPotentialParticipants] = useState<User[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (isOpen) {
-            // Reset state and fetch data when the modal is opened
-            setGroupName('');
-            setSelectedIds(new Set());
-            setSearchTerm('');
-            setAllCareers(mockApiService.getCareers());
-            setPotentialParticipants(mockApiService.getAllUsers().filter(u => u.id !== currentUser.id));
-        }
+        const fetchData = async () => {
+            if (isOpen) {
+                setLoading(true);
+                setGroupName('');
+                setSelectedIds(new Set());
+                setSearchTerm('');
+                try {
+                    const [careers, users] = await Promise.all([
+                        api.getCareers(),
+                        api.getAllUsers()
+                    ]);
+                    setAllCareers(careers);
+                    setPotentialParticipants(users.filter(u => u.id !== currentUser.id));
+                } catch(error) {
+                    console.error("Failed to load data for group modal", error);
+                } finally {
+                    setLoading(false);
+                }
+            }
+        };
+        fetchData();
     }, [isOpen, currentUser]);
 
     if (!isOpen) return null;
@@ -91,7 +104,8 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ isOpen, onClose, on
                     onChange={e => setGroupName(e.target.value)}
                     className="w-full border-gray-300 rounded-md shadow-sm p-2 mb-4"
                 />
-
+                
+                {loading ? <p>Cargando participantes...</p> :
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto">
                     {/* Career Selection */}
                     <div className="flex flex-col">
@@ -105,7 +119,6 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ isOpen, onClose, on
                                         type="checkbox"
                                         id={`career-${career.id}`}
                                         checked={selectionState === 'all'}
-                                        // Fix: The ref callback was returning a boolean. It should not return anything. Changed to a statement body.
                                         ref={el => {
                                             if (el) {
                                                 el.indeterminate = selectionState === 'partial';
@@ -146,6 +159,7 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ isOpen, onClose, on
                         </div>
                     </div>
                 </div>
+                }
 
                 <div className="mt-4 pt-4 border-t flex justify-between items-center">
                     <p className="text-sm font-semibold text-gray-600">{selectedIds.size} participante(s) seleccionado(s)</p>

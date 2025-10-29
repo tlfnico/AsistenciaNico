@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import Card from '../../components/common/Card';
-import { mockApiService } from '../../services/mockData';
+import * as api from '../../services/api';
 import Icon from '../../components/common/Icon';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../../components/common/Button';
@@ -15,15 +15,19 @@ const FeedbackCard: React.FC = () => {
     const [text, setText] = useState('');
     const [feedback, setFeedback] = useState('');
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!text.trim() || !user) return;
         
-        mockApiService.addSuggestionComplaint({ userId: user.id, type, text });
-        
-        setFeedback('¡Gracias por tu opinión!');
-        setText('');
-        setTimeout(() => setFeedback(''), 3000);
+        try {
+            await api.addSuggestionComplaint({ userId: user.id, type, text });
+            setFeedback('¡Gracias por tu opinión!');
+            setText('');
+        } catch(err) {
+            setFeedback('Error al enviar. Intente de nuevo.');
+        } finally {
+            setTimeout(() => setFeedback(''), 3000);
+        }
     };
 
     return (
@@ -57,20 +61,37 @@ const FeedbackCard: React.FC = () => {
 const PreceptorDashboard: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const [unreadConversations, setUnreadConversations] = useState<ConversationListItem[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const unreadConversations = useMemo((): ConversationListItem[] => {
-        if (!user) return [];
-        const allConversations = mockApiService.getConversations(user.id);
-        return allConversations
-            .filter(convo =>
-                convo.lastMessage &&
-                convo.lastMessage.senderId !== user.id &&
-                !convo.lastMessage.readBy.includes(user.id)
-            )
-            .slice(0, 4);
+    useEffect(() => {
+        const fetchData = async () => {
+            if (!user) return;
+            setLoading(true);
+            try {
+                const allConversations = await api.getConversations(user.id);
+                const unread = allConversations
+                    .filter(convo =>
+                        convo.lastMessage &&
+                        convo.lastMessage.senderId !== user.id &&
+                        !convo.lastMessage.readBy.includes(user.id)
+                    )
+                    .slice(0, 4);
+                setUnreadConversations(unread);
+            } catch (error) {
+                console.error("Failed to fetch dashboard data:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
     }, [user]);
 
     if (!user) return null;
+
+    if (loading) {
+        return <div>Cargando dashboard...</div>;
+    }
 
     return (
         <div className="space-y-6">

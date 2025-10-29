@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CalendarEvent, CalendarEventType } from '../../types';
-import { mockApiService } from '../../services/mockData';
+import * as api from '../../services/api';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import Icon from '../common/Icon';
@@ -14,6 +14,7 @@ interface EventModalProps {
 
 const EventModal: React.FC<EventModalProps> = ({ event, onClose, onSave, allowedEventTypes }) => {
     const [formData, setFormData] = useState(event || { title: '', date: '', type: allowedEventTypes ? allowedEventTypes[0] : CalendarEventType.EXAM, description: '' });
+    const [loading, setLoading] = useState(false);
 
     const eventTypeOptions = allowedEventTypes ? Object.values(CalendarEventType).filter(type => allowedEventTypes.includes(type)) : Object.values(CalendarEventType);
 
@@ -21,22 +22,35 @@ const EventModal: React.FC<EventModalProps> = ({ event, onClose, onSave, allowed
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!formData.title || !formData.date || !formData.description) return;
-
-        if ('id' in formData && formData.id) {
-            mockApiService.updateCalendarEvent(formData as CalendarEvent);
-        } else {
-            mockApiService.addCalendarEvent(formData as Omit<CalendarEvent, 'id'>);
+        setLoading(true);
+        try {
+            if ('id' in formData && formData.id) {
+                await api.updateCalendarEvent(formData as CalendarEvent);
+            } else {
+                await api.addCalendarEvent(formData as Omit<CalendarEvent, 'id'>);
+            }
+            onSave();
+        } catch (error) {
+            console.error("Failed to save event", error);
+        } finally {
+            setLoading(false);
         }
-        onSave();
     };
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (window.confirm('¿Estás seguro de que quieres eliminar este evento?')) {
             if ('id' in formData && formData.id) {
-                mockApiService.deleteCalendarEvent(formData.id);
-                onSave();
+                setLoading(true);
+                 try {
+                    await api.deleteCalendarEvent(formData.id);
+                    onSave();
+                } catch (error) {
+                    console.error("Failed to delete event", error);
+                } finally {
+                    setLoading(false);
+                }
             }
         }
     };
@@ -67,11 +81,11 @@ const EventModal: React.FC<EventModalProps> = ({ event, onClose, onSave, allowed
                 </div>
                 <div className="mt-6 flex justify-between">
                     <div>
-                        {event?.id && <Button variant="danger" onClick={handleDelete}><Icon name="delete" /></Button>}
+                        {event?.id && <Button variant="danger" onClick={handleDelete} disabled={loading}><Icon name="delete" /></Button>}
                     </div>
                     <div className="flex gap-2">
-                        <Button variant="secondary" onClick={onClose}>Cancelar</Button>
-                        <Button onClick={handleSubmit}>Guardar</Button>
+                        <Button variant="secondary" onClick={onClose} disabled={loading}>Cancelar</Button>
+                        <Button onClick={handleSubmit} disabled={loading}>{loading ? 'Guardando...' : 'Guardar'}</Button>
                     </div>
                 </div>
             </Card>

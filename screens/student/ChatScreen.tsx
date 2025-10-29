@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { mockApiService, preceptors } from '../../services/mockData';
-import { ConversationListItem, Preceptor } from '../../types';
+import * as api from '../../services/api';
+import { ConversationListItem, Preceptor, UserRole } from '../../types';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Icon from '../../components/common/Icon';
@@ -10,12 +10,26 @@ import Icon from '../../components/common/Icon';
 const ChatScreen: React.FC = () => {
     const { user } = useAuth();
     const [conversations, setConversations] = useState<ConversationListItem[]>([]);
+    const [preceptors, setPreceptors] = useState<Preceptor[]>([]);
     const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
+    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
-    const refreshConversations = () => {
+    const refreshConversations = async () => {
         if (user) {
-            setConversations(mockApiService.getConversations(user.id));
+            setLoading(true);
+            try {
+                const [convos, allUsers] = await Promise.all([
+                    api.getConversations(user.id),
+                    api.getAllUsers()
+                ]);
+                setConversations(convos);
+                setPreceptors(allUsers.filter(u => u.role === UserRole.PRECEPTOR) as Preceptor[]);
+            } catch (error) {
+                console.error("Failed to load chat data", error);
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
@@ -23,12 +37,17 @@ const ChatScreen: React.FC = () => {
         refreshConversations();
     }, [user]);
 
-    const handleStartNewChat = (preceptor: Preceptor) => {
+    const handleStartNewChat = async (preceptor: Preceptor) => {
         if (!user) return;
-        const newConvo = mockApiService.getOrCreateConversation(user.id, preceptor.id);
+        // Fix: Correctly call the 'getOrCreateConversation' function.
+        const newConvo = await api.getOrCreateConversation(user.id, preceptor.id);
         navigate(`/chat/${newConvo.id}`);
         setIsNewChatModalOpen(false);
     };
+
+    if (loading) {
+        return <div>Cargando chats...</div>;
+    }
 
     return (
         <div className="space-y-6">

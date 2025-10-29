@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { mockApiService, users } from '../services/mockData';
+import * as api from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import { Message, User, Conversation } from '../types';
 import Card from '../components/common/Card';
@@ -48,74 +48,89 @@ const ChatDetailScreen: React.FC = () => {
     const [conversation, setConversation] = useState<Conversation | null>(null);
     const [conversationName, setConversationName] = useState('');
     const [newMessage, setNewMessage] = useState('');
-    const [isTyping, setIsTyping] = useState(false);
     const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const typingTimeoutRef = useRef<number | null>(null);
-    
-    const userCache = useMemo(() => {
-        const cache = new Map<string, User>();
-        users.forEach(u => cache.set(u.id, u));
-        return cache;
-    }, []);
 
-    // Effect to fetch conversation details and messages
-    useEffect(() => {
+    const [userCache, setUserCache] = useState<Map<string, User>>(new Map());
+
+    const loadConversation = async () => {
         if (currentUser && conversationId) {
-            const convoDetails = mockApiService.getConversationDetails(conversationId);
+            let convoDetails = await api.getConversationDetails(conversationId);
+            
             if (!convoDetails) {
-                // If a 1-on-1 chat doesn't exist, it might be a conceptual one.
-                // We attempt to find/create it.
                 const participantIds = conversationId.split('-');
                 if(participantIds.length === 2) {
-                    const createdConvo = mockApiService.getOrCreateConversation(participantIds[0], participantIds[1]);
-                    setConversation(createdConvo);
+                     // Fix: Correctly call the 'getOrCreateConversation' function.
+                     convoDetails = await api.getOrCreateConversation(participantIds[0], participantIds[1]);
                 } else {
                      setConversationName('Chat no encontrado');
                      return;
                 }
-            } else {
-                 setConversation(convoDetails);
             }
+            setConversation(convoDetails);
+            
+            const msgs = await api.getMessages(conversationId);
+            setMessages(msgs);
 
-            mockApiService.markMessagesAsRead(currentUser.id, conversationId);
-            setMessages(mockApiService.getMessages(conversationId));
+            // Fix: Correctly call the 'markMessagesAsRead' function.
+            await api.markMessagesAsRead(currentUser.id, conversationId);
         }
+    };
+
+    useEffect(() => {
+        loadConversation();
     }, [currentUser, conversationId]);
 
     useEffect(() => {
-        if (conversation && currentUser) {
-             if (conversation.isGroup) {
-                setConversationName(conversation.name || 'Grupo');
-            } else {
-                const otherUserId = conversation.participants.find(p => p !== currentUser.id);
-                const otherUser = mockApiService.getUserById(otherUserId || '');
-                setConversationName(otherUser?.name || 'Chat');
-            }
-        }
-    }, [conversation, currentUser]);
-    
-    // Effect to scroll to bottom when new messages arrive or typing indicator appears
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages, isTyping]);
+        const fetchUsers = async () => {
+            if (conversation) {
+                const newCache = new Map(userCache);
+                let needsUpdate = false;
+                for (const userId of conversation.participants) {
+                    if (!newCache.has(userId)) {
+                        // In a real app, you might fetch users in a batch
+                        // Fix: Correctly call the 'getUserById' function.
+                        const userProfile = await api.getUserById(userId);
+                        if (userProfile) {
+                            newCache.set(userId, userProfile);
+                            needsUpdate = true;
+                        }
+                    }
+                }
+                if (needsUpdate) {
+                    setUserCache(newCache);
+                }
 
-    // Cleanup timeout on unmount
-    useEffect(() => {
-        return () => {
-            if (typingTimeoutRef.current) {
-                clearTimeout(typingTimeoutRef.current);
+                if (currentUser) {
+                    if (conversation.isGroup) {
+                        setConversationName(conversation.name || 'Grupo');
+                    } else {
+                        const otherUserId = conversation.participants.find(p => p !== currentUser.id);
+                        const otherUser = newCache.get(otherUserId || '');
+                        // Fix: Correctly access the 'name' property on a potentially undefined user object.
+                        setConversationName(otherUser?.name || 'Chat');
+                    }
+                }
             }
         };
-    }, []);
+        fetchUsers();
+    }, [conversation, currentUser, userCache]);
+    
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
 
-    const handleSendMessage = (e: React.FormEvent) => {
+    const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
         if (newMessage.trim() === '' || !currentUser || !conversationId) return;
         
-        mockApiService.sendMessage(currentUser.id, conversationId, newMessage.trim());
-        setMessages(mockApiService.getMessages(conversationId));
+        const tempMessage = newMessage.trim();
         setNewMessage('');
+        
+        await api.sendMessage(currentUser.id, conversationId, tempMessage);
+        
+        const updatedMessages = await api.getMessages(conversationId);
+        setMessages(updatedMessages);
     };
 
     if (!conversation) {

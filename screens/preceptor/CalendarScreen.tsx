@@ -1,13 +1,12 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import Card from '../../components/common/Card';
 import UpcomingEventsCard from '../../components/dashboard/UpcomingEventsCard';
 import PersonalTasksCard from '../../components/dashboard/PersonalTasksCard';
 import { CalendarEvent, CalendarEventType } from '../../types';
-import { mockApiService } from '../../services/mockData';
+import * as api from '../../services/api';
 import Icon, { IconName } from '../../components/common/Icon';
 import Button from '../../components/common/Button';
 import EventModal from '../../components/calendar/EventModal';
-import { useAuth } from '../../hooks/useAuth';
 
 const getEventTypeStyles = (type: CalendarEventType) => {
     switch (type) {
@@ -23,11 +22,26 @@ const getEventTypeStyles = (type: CalendarEventType) => {
 const InteractiveCalendar: React.FC = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState(new Date());
-    const [events, setEvents] = useState(() => mockApiService.getCalendarEvents());
+    const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingEvent, setEditingEvent] = useState<Partial<CalendarEvent> | null>(null);
+    const [loading, setLoading] = useState(true);
     
-    const refreshEvents = () => setEvents(mockApiService.getCalendarEvents());
+    const refreshEvents = async () => {
+        setLoading(true);
+        try {
+            const data = await api.getCalendarEvents();
+            setEvents(data);
+        } catch (error) {
+            console.error("Failed to refresh events", error);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    useEffect(() => {
+        refreshEvents();
+    }, []);
 
     const handleOpenModal = (event: Partial<CalendarEvent> | null) => {
         setEditingEvent(event);
@@ -80,6 +94,8 @@ const InteractiveCalendar: React.FC = () => {
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                     </button>
                 </div>
+                {loading ? <p className="text-center">Cargando...</p> :
+                <>
                 <div className="grid grid-cols-7 text-center">
                     {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(day => <div key={day} className="font-bold text-gray-600 py-2 text-sm">{day}</div>)}
                 </div>
@@ -132,6 +148,7 @@ const InteractiveCalendar: React.FC = () => {
                         <Icon name="plus" className="w-5 h-5" /> Añadir Evento
                     </Button>
                 </div>
+                </>}
             </Card>
             {isModalOpen && (
                 <EventModal

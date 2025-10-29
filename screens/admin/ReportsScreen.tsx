@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Card from '../../components/common/Card';
-import { mockApiService } from '../../services/mockData';
-import { SuggestionComplaint, SuggestionComplaintStatus, SuggestionComplaintType, UserRole } from '../../types';
+import * as api from '../../services/api';
+import { SuggestionComplaint, SuggestionComplaintStatus, SuggestionComplaintType, User, UserRole } from '../../types';
 import Button from '../../components/common/Button';
 
 // Helper to get status styles
@@ -22,16 +22,33 @@ const getTypeStyles = (type: SuggestionComplaintType) => {
 };
 
 const SuggestionsScreen: React.FC = () => {
-    const [suggestions, setSuggestions] = useState(() => mockApiService.getSuggestionsComplaints());
-    const [users] = useState(() => mockApiService.getAllUsers());
+    const [suggestions, setSuggestions] = useState<SuggestionComplaint[]>([]);
+    const [usersMap, setUsersMap] = useState<Map<string, User>>(new Map());
+    const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({ type: 'all', status: 'all' });
 
-    const refreshSuggestions = () => {
-        setSuggestions(mockApiService.getSuggestionsComplaints());
+    const refreshSuggestions = async () => {
+        setLoading(true);
+        try {
+            const [sugs, users] = await Promise.all([
+                api.getSuggestionsComplaints(),
+                api.getAllUsers()
+            ]);
+            setSuggestions(sugs);
+            setUsersMap(new Map(users.map(u => [u.id, u])));
+        } catch(error) {
+            console.error("Failed to load suggestions:", error);
+        } finally {
+            setLoading(false);
+        }
     };
     
-    const handleStatusChange = (id: string, status: SuggestionComplaintStatus) => {
-        mockApiService.updateSuggestionComplaintStatus(id, status);
+    useEffect(() => {
+        refreshSuggestions();
+    }, []);
+    
+    const handleStatusChange = async (id: string, status: SuggestionComplaintStatus) => {
+        await api.updateSuggestionComplaintStatus(id, status);
         refreshSuggestions();
     };
 
@@ -47,12 +64,9 @@ const SuggestionsScreen: React.FC = () => {
         });
     }, [suggestions, filters]);
     
-    const usersMap = useMemo(() => {
-        return users.reduce((acc, user) => {
-            acc[user.id] = user;
-            return acc;
-        }, {} as Record<string, any>);
-    }, [users]);
+    if (loading) {
+        return <div>Cargando...</div>
+    }
 
     return (
         <div className="space-y-6">
@@ -76,7 +90,7 @@ const SuggestionsScreen: React.FC = () => {
 
             <div className="space-y-4">
                 {filteredSuggestions.length > 0 ? filteredSuggestions.map(s => {
-                    const user = usersMap[s.userId];
+                    const user = usersMap.get(s.userId);
                     return (
                         <Card key={s.id}>
                             <div className="flex flex-col md:flex-row justify-between md:items-start gap-4">
@@ -89,7 +103,7 @@ const SuggestionsScreen: React.FC = () => {
                                 </div>
                                 <div className="md:text-right flex-shrink-0">
                                     <p className="font-semibold text-brand-text">{user?.name || 'Usuario desconocido'}</p>
-                                    <p className="text-sm text-gray-500">{user?.role === UserRole.STUDENT ? 'Alumno' : 'Preceptor'}</p>
+                                    <p className="text-sm text-gray-500 capitalize">{user?.role}</p>
                                     <p className="text-sm text-gray-500 mt-1">{new Date(s.date + 'T00:00:00').toLocaleDateString()}</p>
                                 </div>
                             </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { mockApiService } from '../../services/mockData';
+import * as api from '../../services/api';
 import { ConversationListItem, User } from '../../types';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
@@ -10,38 +10,61 @@ import Icon from '../../components/common/Icon';
 const AdminChatScreen: React.FC = () => {
     const { user } = useAuth();
     const [conversations, setConversations] = useState<ConversationListItem[]>([]);
+    const [allUsers, setAllUsers] = useState<User[]>([]);
     const [isDirectChatModalOpen, setIsDirectChatModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
-    const allUsers = useMemo(() => {
+    const potentialParticipants = useMemo(() => {
         if (!user) return [];
-        return mockApiService.getAllUsers().filter(u => u.id !== user.id);
-    }, [user]);
+        return allUsers.filter(u => u.id !== user.id);
+    }, [user, allUsers]);
 
     useEffect(() => {
-        if (user) {
-            setConversations(mockApiService.getConversations(user.id));
-        }
+        const fetchData = async () => {
+            if (user) {
+                setLoading(true);
+                try {
+                    const [convos, users] = await Promise.all([
+                        api.getConversations(user.id),
+                        api.getAllUsers()
+                    ]);
+                    setConversations(convos);
+                    setAllUsers(users);
+                } catch(error) {
+                    console.error("Failed to load chat data", error);
+                } finally {
+                    setLoading(false);
+                }
+            }
+        };
+        fetchData();
     }, [user]);
 
-    const handleStartNewChat = (otherUser: User) => {
+    const handleStartNewChat = async (otherUser: User) => {
         if (!user) return;
-        const newConvo = mockApiService.getOrCreateConversation(user.id, otherUser.id);
+        // Fix: Correctly call the 'getOrCreateConversation' function.
+        const newConvo = await api.getOrCreateConversation(user.id, otherUser.id);
         setIsDirectChatModalOpen(false);
         setSearchTerm('');
         navigate(`/chat/${newConvo.id}`);
     };
 
-    const handleStartPreceptorsChat = () => {
+    const handleStartPreceptorsChat = async () => {
         if (!user) return;
-        const newGroup = mockApiService.getOrCreatePreceptorsGroup(user.id);
+        // Fix: Correctly call the 'getOrCreatePreceptorsGroup' function.
+        const newGroup = await api.getOrCreatePreceptorsGroup(user.id);
         navigate(`/chat/${newGroup.id}`);
     };
 
-    const filteredUsers = allUsers.filter(u =>
+    const filteredUsers = potentialParticipants.filter(u =>
         u.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    if (loading) {
+        return <div>Cargando chats...</div>
+    }
 
     return (
         <div className="space-y-6">

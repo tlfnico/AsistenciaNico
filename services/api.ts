@@ -1,11 +1,170 @@
 import { supabase } from './supabaseClient';
-import { AttendanceRecord, User, Career, Notification, Conversation, Message, CalendarEvent, Note, SuggestionComplaint, Grade, FinalExam, Student, ConversationListItem } from '../types';
+import { 
+    AttendanceRecord, 
+    User, 
+    Career, 
+    Notification, 
+    Conversation, 
+    Message, 
+    CalendarEvent, 
+    Note, 
+    SuggestionComplaint, 
+    Grade, 
+    FinalExam, 
+    Student, 
+    ConversationListItem,
+    UserRole,
+    Subject,
+    Preceptor,
+    Admin,
+    Professor,
+    FinalEnrollment,
+    SuggestionComplaintType,
+    SuggestionComplaintStatus
+} from '../types';
 
-// NOTA: Esta es una implementación parcial del servicio API.
-// Es necesario crear funciones para todos los tipos de datos, siguiendo estos patrones.
-// Se asume que los nombres de las tablas están en plural y en snake_case (p. ej., 'attendance_records').
-// Se asume que los nombres de las columnas coinciden con las propiedades camelCase de los tipos (p. ej., 'studentId').
-// Esto se puede lograr en PostgreSQL usando identificadores entre comillas.
+// Helper to handle Supabase errors
+const handleSupabaseError = (error: any, context: string) => {
+    if (error) {
+        console.error(`Error in ${context}:`, error);
+        throw error;
+    }
+};
+
+// --- User Management ---
+export const getAllUsers = async (): Promise<(Student | Preceptor | Admin | Professor)[]> => {
+    const { data, error } = await supabase.from('profiles').select('*');
+    handleSupabaseError(error, 'getAllUsers');
+    return data || [];
+};
+
+// Fix: Add missing getUserById function
+export const getUserById = async (userId: string): Promise<User | null> => {
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
+    handleSupabaseError(error, 'getUserById');
+    return data;
+};
+
+
+export const addUser = async (user: Omit<User, 'id'>) => {
+    // This assumes you have a separate trigger/function in Supabase to create an auth user
+    // For simplicity here, we're just adding to the profiles table.
+    const { data, error } = await supabase.from('profiles').insert(user).select().single();
+    handleSupabaseError(error, 'addUser');
+    return data;
+};
+
+export const updateUser = async (updatedUser: Partial<User> & {id: string}) => {
+    const { data, error } = await supabase.from('profiles').update(updatedUser).eq('id', updatedUser.id).select().single();
+    handleSupabaseError(error, 'updateUser');
+    return data;
+};
+
+export const deleteUser = async (userId: string) => {
+    const { error } = await supabase.from('profiles').delete().eq('id', userId);
+    handleSupabaseError(error, 'deleteUser');
+};
+
+
+// --- Career & Subject Management ---
+export const getCareers = async (): Promise<Career[]> => {
+    const { data, error } = await supabase.from('careers').select('*, subjects(*)');
+    handleSupabaseError(error, 'getCareers');
+    return (data as Career[]) || [];
+};
+
+export const addCareer = async (career: Omit<Career, 'id'>) => {
+    // Separate career and subjects
+    const { subjects, ...careerData } = career;
+    
+    // Insert career
+    const { data: newCareer, error: careerError } = await supabase.from('careers').insert(careerData).select().single();
+    handleSupabaseError(careerError, 'addCareer (career)');
+    if (!newCareer) return null;
+
+    // Insert subjects
+    if (subjects && subjects.length > 0) {
+        const subjectsWithCareerId = subjects.map(s => ({ ...s, careerId: newCareer.id }));
+        const { error: subjectsError } = await supabase.from('subjects').insert(subjectsWithCareerId);
+        handleSupabaseError(subjectsError, 'addCareer (subjects)');
+    }
+
+    return { ...newCareer, subjects };
+};
+
+export const updateCareer = async (updatedCareer: Career) => {
+    const { subjects, ...careerData } = updatedCareer;
+    
+    const { error: careerError } = await supabase.from('careers').update(careerData).eq('id', careerData.id);
+    handleSupabaseError(careerError, 'updateCareer (career)');
+
+    // Simplistic subject update: delete existing and insert new ones
+    const { error: deleteError } = await supabase.from('subjects').delete().eq('careerId', careerData.id);
+    handleSupabaseError(deleteError, 'updateCareer (delete subjects)');
+
+    if (subjects && subjects.length > 0) {
+        const subjectsWithCareerId = subjects.map(s => ({ ...s, careerId: careerData.id, id: undefined })); // Ensure new IDs are generated
+        const { error: insertError } = await supabase.from('subjects').insert(subjectsWithCareerId);
+        handleSupabaseError(insertError, 'updateCareer (insert subjects)');
+    }
+};
+
+export const deleteCareer = async (careerId: string) => {
+    // On cascade should delete subjects if set up in DB
+    const { error } = await supabase.from('careers').delete().eq('id', careerId);
+    handleSupabaseError(error, 'deleteCareer');
+};
+
+export const getSubjectsForCareer = async (careerName: string): Promise<string[]> => {
+    const { data: career, error } = await supabase.from('careers').select('id').eq('name', careerName).single();
+    if (error || !career) return [];
+    
+    const { data: subjects, error: subjectError } = await supabase.from('subjects').select('name').eq('careerId', career.id);
+    handleSupabaseError(subjectError, 'getSubjectsForCareer');
+    return subjects?.map(s => s.name) || [];
+};
+
+export const getSubjectsByProfessor = async (professorId: string): Promise<(Subject & { careerName: string })[]> => {
+    const { data, error } = await supabase
+        .from('subjects')
+        .select('*, career:careers(name)')
+        .eq('professorId', professorId);
+    handleSupabaseError(error, 'getSubjectsByProfessor');
+    
+    return data?.map((s: any) => ({ ...s, careerName: s.career.name })) || [];
+};
+
+
+// --- Student Data ---
+export const getStudentsBySubjectId = async (subjectId: string): Promise<Student[]> => {
+    const { data: subject, error: subjectError } = await supabase.from('subjects').select('year, careerId').eq('id', subjectId).single();
+    if (subjectError || !subject) return [];
+    
+    const { data: career, error: careerError } = await supabase.from('careers').select('name').eq('id', subject.careerId).single();
+    if (careerError || !career) return [];
+
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', UserRole.STUDENT)
+        .eq('year', subject.year)
+        .contains('careers', [career.name]);
+        
+    handleSupabaseError(error, 'getStudentsBySubjectId');
+    return (data as Student[]) || [];
+};
+
+export const getStudentsByCareerAndYear = async (career: string, year: number): Promise<Student[]> => {
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', UserRole.STUDENT)
+        .eq('year', year)
+        .contains('careers', [career]);
+    handleSupabaseError(error, 'getStudentsByCareerAndYear');
+    return (data as Student[]) || [];
+};
+
 
 // == Asistencia ==
 export const getStudentAttendance = async (studentId: string): Promise<AttendanceRecord[]> => {
@@ -13,9 +172,33 @@ export const getStudentAttendance = async (studentId: string): Promise<Attendanc
         .from('attendance_records')
         .select('*')
         .eq('studentId', studentId);
-    if (error) throw error;
+    handleSupabaseError(error, 'getStudentAttendance');
     return data || [];
 };
+
+export const getMonthlyAttendanceForClass = async (studentIds: string[], subject: string, year: number, month: number): Promise<AttendanceRecord[]> => {
+    const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+    const endDate = new Date(year, month + 1, 0).toISOString().split('T')[0];
+
+    const { data, error } = await supabase
+        .from('attendance_records')
+        .select('*')
+        .in('studentId', studentIds)
+        .eq('subject', subject)
+        .gte('date', startDate)
+        .lte('date', endDate);
+    
+    handleSupabaseError(error, 'getMonthlyAttendanceForClass');
+    return data || [];
+};
+
+export const saveAttendance = async (records: { studentId: string, status: string }[], subject: string, date: string) => {
+    const recordsToUpsert = records.map(r => ({ ...r, subject, date }));
+    // Upsert to avoid duplicate records for the same student, subject, and date
+    const { error } = await supabase.from('attendance_records').upsert(recordsToUpsert, { onConflict: 'studentId,subject,date' });
+    handleSupabaseError(error, 'saveAttendance');
+};
+
 
 // == Notificaciones ==
 export const getNotifications = async (): Promise<Notification[]> => {
@@ -23,97 +206,49 @@ export const getNotifications = async (): Promise<Notification[]> => {
         .from('notifications')
         .select('*')
         .order('date', { ascending: false });
-    if (error) throw error;
+    handleSupabaseError(error, 'getNotifications');
     return data || [];
 };
 
-// == Usuarios / Perfiles ==
-export const getUserById = async (userId: string): Promise<User | null> => {
-     const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-    if (error) {
-        console.error('Error fetching user', error);
-        return null;
-    }
+export const addNotification = async (notification: Omit<Notification, 'id' | 'date'>) => {
+    const newNotification = {
+        ...notification,
+        date: new Date().toISOString().split('T')[0]
+    };
+    const { data, error } = await supabase.from('notifications').insert(newNotification).select().single();
+    handleSupabaseError(error, 'addNotification');
     return data;
 };
 
 // == Chat ==
-export const getConversations = async (userId: string): Promise<ConversationListItem[]> => {
-    // Esta es una consulta compleja que probablemente requeriría una función de base de datos (RPC) para un buen rendimiento.
-    // Esta es una versión simplificada.
-    const { data, error } = await supabase
+// (This is a simplified version; a real-world chat backend can be complex)
+export const getConversationDetails = async (conversationId: string): Promise<Conversation | undefined> => {
+     const { data, error } = await supabase
         .from('conversations')
         .select('*, participants:conversation_participants(userId)')
-        .filter('conversation_participants.userId', 'eq', userId);
-
-    if (error) {
-        console.error('Error fetching conversations', error);
-        return [];
-    }
-    
-    // Esta parte es compleja y necesita más lógica para obtener el último mensaje y los nombres de los participantes.
-    // Por ahora, se devuelve una estructura simplificada.
-    const conversations = data as any[];
-    const result: ConversationListItem[] = await Promise.all(
-        conversations.map(async (convo) => {
-             let name = convo.name || 'Chat';
-             if (!convo.isGroup) {
-                 const otherParticipant = convo.participants.find((p: any) => p.userId !== userId);
-                 if (otherParticipant) {
-                     const userProfile = await getUserById(otherParticipant.userId);
-                     name = userProfile?.name || 'Usuario desconocido';
-                 }
-             }
-
-            // Obtener último mensaje (simplificado)
-            const { data: lastMessageData } = await supabase
-                .from('messages')
-                .select('*')
-                .eq('conversationId', convo.id)
-                .order('timestamp', { ascending: false })
-                .limit(1)
-                .single();
-
-            return {
-                id: convo.id,
-                name,
-                isGroup: convo.isGroup,
-                lastMessage: lastMessageData,
-            }
-        })
-    );
-    return result.sort((a, b) => {
-        if (!a.lastMessage) return 1;
-        if (!b.lastMessage) return -1;
-        return new Date(b.lastMessage.timestamp).getTime() - new Date(a.lastMessage.timestamp).getTime();
-    });
-};
-
-export const getMessages = async (conversationId: string): Promise<Message[]> => {
-    const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('conversationId', conversationId)
-        .order('timestamp', { ascending: true });
-    if (error) throw error;
-    return data || [];
-};
-
-export const sendMessage = async (senderId: string, conversationId: string, text: string): Promise<Message> => {
-    const { data, error } = await supabase
-        .from('messages')
-        .insert({ senderId, conversationId, text, readBy: [senderId] })
-        .select()
+        .eq('id', conversationId)
         .single();
-    if (error) throw error;
-    return data;
+    handleSupabaseError(error, 'getConversationDetails');
+    if (!data) return undefined;
+    return { ...data, participants: data.participants.map((p: any) => p.userId) };
 };
 
+// Fix: Expanded re-export to include missing chat functions.
+export { 
+    getConversations, 
+    getMessages, 
+    sendMessage, 
+    getOrCreateConversation, 
+    markMessagesAsRead,
+    getOrCreateSubjectGroup,
+    createGroup,
+    getOrCreatePreceptorsGroup,
+    getOrCreateProfessorsGroup
+} from './api_chat';
+export { getCalendarEvents, addCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from './api_calendar';
+export { getNotes, addNote, updateNote, deleteNote } from './api_notes';
+export { getSuggestionsComplaints, addSuggestionComplaint, updateSuggestionComplaintStatus } from './api_suggestions';
+export { getGradesForStudent, getGradesBySubject, addOrUpdateGrade } from './api_grades';
+export { getFinalsByProfessor, createFinal, deleteFinal, getAvailableFinalsForStudent, getStudentEnrollments, enrollInFinal, withdrawFromFinal, getEnrolledStudentsForFinal } from './api_finals';
 
-// ... Aquí irían otras funciones de la API
-// (getCareers, getSubjects, getCalendarEvents, etc.)
-
+// Fix: Removed all re-declared functions from here to the end of the file.

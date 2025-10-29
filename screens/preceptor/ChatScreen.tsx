@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { mockApiService, students } from '../../services/mockData';
-import { ConversationListItem, Student, User } from '../../types';
+import * as api from '../../services/api';
+import { ConversationListItem, Student, User, UserRole } from '../../types';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Icon from '../../components/common/Icon';
@@ -10,31 +10,47 @@ import Icon from '../../components/common/Icon';
 const PreceptorChatScreen: React.FC = () => {
     const { user } = useAuth();
     const [conversations, setConversations] = useState<ConversationListItem[]>([]);
+    const [students, setStudents] = useState<Student[]>([]);
     const [isDirectChatModalOpen, setIsDirectChatModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
-    const refreshConversations = () => {
+    const refreshData = async () => {
         if (user) {
-            setConversations(mockApiService.getConversations(user.id));
+            setLoading(true);
+            try {
+                const [convos, allUsers] = await Promise.all([
+                    api.getConversations(user.id),
+                    api.getAllUsers()
+                ]);
+                setConversations(convos);
+                setStudents(allUsers.filter(u => u.role === UserRole.STUDENT) as Student[]);
+            } catch (error) {
+                console.error("Failed to load chat data", error);
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
     useEffect(() => {
-        refreshConversations();
+        refreshData();
     }, [user]);
 
-    const handleStartNewChat = (student: Student) => {
+    const handleStartNewChat = async (student: Student) => {
         if(!user) return;
-        const newConvo = mockApiService.getOrCreateConversation(user.id, student.id);
+        // Fix: Correctly call the 'getOrCreateConversation' function.
+        const newConvo = await api.getOrCreateConversation(user.id, student.id);
         setIsDirectChatModalOpen(false);
         setSearchTerm('');
         navigate(`/chat/${newConvo.id}`);
     };
     
-    const handleStartProfessorsChat = () => {
+    const handleStartProfessorsChat = async () => {
         if (!user) return;
-        const newGroup = mockApiService.getOrCreateProfessorsGroup(user.id);
+        // Fix: Correctly call the 'getOrCreateProfessorsGroup' function.
+        const newGroup = await api.getOrCreateProfessorsGroup(user.id);
         navigate(`/chat/${newGroup.id}`);
     };
 
@@ -42,6 +58,10 @@ const PreceptorChatScreen: React.FC = () => {
     const filteredStudents = students.filter(s =>
         s.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    if (loading) {
+        return <div>Cargando chats...</div>;
+    }
 
     return (
         <div className="space-y-6">

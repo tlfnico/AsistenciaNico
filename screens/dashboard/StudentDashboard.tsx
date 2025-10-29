@@ -26,13 +26,15 @@ const FeedbackCard: React.FC = () => {
         e.preventDefault();
         if (!text.trim() || !user) return;
         
-        // This function would need to be implemented in api.ts
-        // await api.addSuggestionComplaint({ userId: user.id, type, text });
-        console.log("Feedback submitted (not implemented in API yet)");
-        
-        setFeedback('¡Gracias por tu opinión!');
-        setText('');
-        setTimeout(() => setFeedback(''), 3000);
+        try {
+            await api.addSuggestionComplaint({ userId: user.id, type, text });
+            setFeedback('¡Gracias por tu opinión!');
+            setText('');
+        } catch (error) {
+            setFeedback('Error al enviar. Intente de nuevo.');
+        } finally {
+            setTimeout(() => setFeedback(''), 3000);
+        }
     };
 
     return (

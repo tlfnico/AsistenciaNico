@@ -1,6 +1,6 @@
 
-import React, { useState, useMemo } from 'react';
-import { mockApiService } from '../../services/mockData';
+import React, { useState, useMemo, useEffect } from 'react';
+import * as api from '../../services/api';
 import { Notification, NotificationCategory } from '../../types';
 import Card from '../../components/common/Card';
 
@@ -39,8 +39,24 @@ const NotificationItem: React.FC<{ notification: Notification }> = ({ notificati
 };
 
 const NotificationsScreen: React.FC = () => {
-    const allNotifications = mockApiService.getNotifications();
+    const [allNotifications, setAllNotifications] = useState<Notification[]>([]);
+    const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<NotificationCategory | 'all'>('all');
+
+    useEffect(() => {
+        const fetchNotifications = async () => {
+            setLoading(true);
+            try {
+                const data = await api.getNotifications();
+                setAllNotifications(data);
+            } catch (error) {
+                console.error("Failed to fetch notifications:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchNotifications();
+    }, []);
 
     const filteredNotifications = useMemo(() => {
         if (filter === 'all') {
@@ -50,6 +66,10 @@ const NotificationsScreen: React.FC = () => {
     }, [filter, allNotifications]);
     
     const categories: ('all' | NotificationCategory)[] = ['all', ...Object.values(NotificationCategory)];
+
+    if (loading) {
+        return <div>Cargando notificaciones...</div>
+    }
 
     return (
         <div className="space-y-6">

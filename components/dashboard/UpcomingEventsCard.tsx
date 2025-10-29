@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { mockApiService } from '../../services/mockData';
-import { CalendarEventType } from '../../types';
+import * as api from '../../services/api';
+import { CalendarEvent, CalendarEventType } from '../../types';
 import Card from '../common/Card';
 import Icon, { IconName } from '../common/Icon';
 
@@ -23,11 +23,25 @@ interface UpcomingEventsCardProps {
 }
 
 const UpcomingEventsCard: React.FC<UpcomingEventsCardProps> = ({ title = "Próximos Eventos", maxEvents = 5, linkTo }) => {
+    const [allEvents, setAllEvents] = useState<CalendarEvent[]>([]);
+
+    useEffect(() => {
+        const fetchEvents = async () => {
+            try {
+                const data = await api.getCalendarEvents();
+                setAllEvents(data);
+            } catch (error) {
+                console.error("Failed to fetch events for card", error);
+            }
+        }
+        fetchEvents();
+    }, []);
+
     const upcomingEvents = useMemo(() => {
-        return mockApiService.getCalendarEvents()
+        return allEvents
             .filter(e => new Date(e.date + 'T00:00:00') >= new Date(new Date().setHours(0, 0, 0, 0)))
             .slice(0, maxEvents);
-    }, [maxEvents]);
+    }, [allEvents, maxEvents]);
 
     return (
         <Card>

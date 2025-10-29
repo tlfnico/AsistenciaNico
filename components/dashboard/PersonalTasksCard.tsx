@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { mockApiService } from '../../services/mockData';
+import * as api from '../../services/api';
 import { Note } from '../../types';
 import Card from '../common/Card';
 import { useAuth } from '../../hooks/useAuth';
@@ -12,35 +12,46 @@ const PersonalTasksCard: React.FC = () => {
     const [isAdding, setIsAdding] = useState(false);
     const [newTask, setNewTask] = useState({ text: '', date: new Date().toISOString().split('T')[0] });
     const [editingTask, setEditingTask] = useState<Note | null>(null);
+    const [loading, setLoading] = useState(false);
 
-    const loadTasks = () => {
+    const loadTasks = async () => {
         if (user) {
-            setTasks(mockApiService.getNotes(user.id));
+            setLoading(true);
+            try {
+                const data = await api.getNotes(user.id);
+                setTasks(data);
+            } catch(error) {
+                console.error("Failed to load tasks", error);
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
-    useEffect(loadTasks, [user]);
+    useEffect(() => {
+        loadTasks();
+    }, [user]);
 
-    const handleAddTask = () => {
+    const handleAddTask = async () => {
         if (newTask.text.trim() && newTask.date && user) {
-            mockApiService.addNote(user.id, newTask.text.trim(), newTask.date);
+            await api.addNote(user.id, newTask.text.trim(), newTask.date);
             setNewTask({ text: '', date: new Date().toISOString().split('T')[0] });
             setIsAdding(false);
             loadTasks();
         }
     };
 
-    const handleUpdateTask = () => {
+    const handleUpdateTask = async () => {
         if (editingTask && editingTask.text.trim() && editingTask.date) {
-            mockApiService.updateNote(editingTask.id, editingTask.text.trim(), editingTask.date);
+            await api.updateNote(editingTask.id, editingTask.text.trim(), editingTask.date);
             setEditingTask(null);
             loadTasks();
         }
     };
 
-    const handleDeleteTask = (taskId: string) => {
+    const handleDeleteTask = async (taskId: string) => {
         if (window.confirm('¿Seguro que quieres eliminar esta tarea?')) {
-            mockApiService.deleteNote(taskId);
+            await api.deleteNote(taskId);
             loadTasks();
         }
     };
@@ -76,7 +87,8 @@ const PersonalTasksCard: React.FC = () => {
             )}
             
             <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-                {tasks.length > 0 ? tasks.map(task => (
+                {loading && <p>Cargando tareas...</p>}
+                {!loading && tasks.length > 0 ? tasks.map(task => (
                     <div key={task.id} className="p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded-r-lg">
                         <div className="flex justify-between items-start">
                              <p className="text-gray-800 whitespace-pre-wrap text-sm">{task.text}</p>
@@ -90,7 +102,7 @@ const PersonalTasksCard: React.FC = () => {
                         </div>
                     </div>
                 )) : (
-                     <p className="text-gray-500 text-center py-4">No tienes tareas personales.</p>
+                     !loading && <p className="text-gray-500 text-center py-4">No tienes tareas personales.</p>
                 )}
             </div>
 

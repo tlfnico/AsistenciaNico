@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { mockApiService } from '../../services/mockData';
+import * as api from '../../services/api';
 import { Notification, NotificationCategory } from '../../types';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
@@ -46,31 +46,43 @@ const PreceptorNotificationsScreen: React.FC = () => {
     const [isUrgent, setIsUrgent] = useState(false);
     const [feedback, setFeedback] = useState('');
     const [sentNotifications, setSentNotifications] = useState<Notification[]>([]);
-    const [refreshKey, setRefreshKey] = useState(0);
     
     const notificationCategory = isUrgent ? NotificationCategory.URGENT : category;
 
+    const fetchHistory = async () => {
+        try {
+            const history = await api.getNotifications();
+            setSentNotifications(history.slice(0, 10)); // Show last 10
+        } catch (error) {
+            console.error("Failed to fetch notification history:", error);
+        }
+    };
+
     useEffect(() => {
-        const allNots = mockApiService.getNotifications();
-        setSentNotifications(allNots.slice(0, 10)); // Show last 10
-    }, [refreshKey]);
+        fetchHistory();
+    }, []);
 
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!title || !description) {
             setFeedback('Por favor, complete todos los campos.');
             return;
         }
         
-        mockApiService.addNotification({ title, description, category: notificationCategory });
-        setFeedback('¡Notificación enviada con éxito!');
-        setTitle('');
-        setDescription('');
-        setIsUrgent(false);
-        setCategory(NotificationCategory.INFORMATIVE);
-        setRefreshKey(k => k + 1);
-        setTimeout(() => setFeedback(''), 3000);
+        try {
+            await api.addNotification({ title, description, category: notificationCategory });
+            setFeedback('¡Notificación enviada con éxito!');
+            setTitle('');
+            setDescription('');
+            setIsUrgent(false);
+            setCategory(NotificationCategory.INFORMATIVE);
+            fetchHistory(); // Refresh history
+        } catch(error) {
+            setFeedback('Error al enviar la notificación.');
+        } finally {
+             setTimeout(() => setFeedback(''), 3000);
+        }
     };
 
     return (

@@ -317,462 +317,207 @@ export let finalEnrollments: FinalEnrollment[] = [
     { finalId: 'fin3', studentId: 's1' },
 ];
 
-// Mock API functions
+// Fix: Added mockApiService to provide mock data interactions.
 export const mockApiService = {
-    login: (email: string): User | null => {
-        return users.find(u => u.email === email) || null;
-    },
-    getAllUsers: (): (Student | Preceptor | Admin | Professor)[] => {
-        return [...users];
-    },
-    addUser: (user: Omit<User, 'id'>) => {
-        const baseId = user.role.charAt(0);
-        const newUser = {
-            ...user,
-            id: `${baseId}${Date.now()}`
-        };
-        users.push(newUser);
-        return newUser;
-    },
-    updateUser: (updatedUser: User) => {
-        const index = users.findIndex(u => u.id === updatedUser.id);
-        if (index !== -1) {
-            users[index] = { ...users[index], ...updatedUser };
-        }
-    },
-    deleteUser: (userId: string) => {
-        users = users.filter(u => u.id !== userId);
-    },
-    getCareers: (): Career[] => {
-        return [...careers];
-    },
-    addCareer: (career: Omit<Career, 'id'>) => {
-        const newCareer = { ...career, id: `c${Date.now()}`};
+    // Careers & Subjects
+    getCareers: () => careers,
+    getSubjectsForCareer: (careerName: string) => careers.find(c => c.name === careerName)?.subjects.map(s => s.name) || [],
+    addCareer: (career: { name: string, subjects: Subject[] }) => {
+        const newCareer = { ...career, id: `c${Date.now()}` };
         careers.push(newCareer);
-        return newCareer;
     },
     updateCareer: (updatedCareer: Career) => {
         const index = careers.findIndex(c => c.id === updatedCareer.id);
-        if (index !== -1) {
-            careers[index] = updatedCareer;
-        }
+        if (index !== -1) careers[index] = updatedCareer;
     },
     deleteCareer: (careerId: string) => {
         careers = careers.filter(c => c.id !== careerId);
     },
-    getSubjectsForCareer: (careerName: string): string[] => {
-        const career = careers.find(c => c.name === careerName);
-        return career ? career.subjects.map(s => s.name) : [];
-    },
     getSubjectsByProfessor: (professorId: string): (Subject & { careerName: string })[] => {
-        const profSubjects: (Subject & { careerName: string })[] = [];
-        careers.forEach(career => {
-            career.subjects.forEach(subject => {
-                if (subject.professorId === professorId) {
-                    profSubjects.push({ ...subject, careerName: career.name });
-                }
-            });
-        });
-        return profSubjects;
+        const professor = professors.find(p => p.id === professorId);
+        if (!professor) return [];
+        const subjectsWithCareer = careers.flatMap(c => c.subjects.map(s => ({ ...s, careerName: c.name })));
+        return subjectsWithCareer.filter(s => professor.subjects.includes(s.id));
     },
-    getStudentsBySubjectId: (subjectId: string): Student[] => {
-        let targetCareer: Career | undefined;
-        let targetSubject: Subject | undefined;
-        
-        for (const career of careers) {
-            const foundSubject = career.subjects.find(s => s.id === subjectId);
-            if (foundSubject) {
-                targetCareer = career;
-                targetSubject = foundSubject;
-                break;
-            }
-        }
 
-        if (!targetCareer || !targetSubject) {
-            return [];
-        }
-
-        return students.filter(s => 
-            s.careers.includes(targetCareer!.name) && s.year === targetSubject!.year
-        );
+    // Users
+    getAllUsers: () => users,
+    addUser: (user: Omit<User, 'id'>) => {
+        const newUser = { ...user, id: `${user.role[0]}${Date.now()}` };
+        users.push(newUser as User);
     },
-    getStudentsBySubject: (subjectName: string): Student[] => {
-        let targetCareer: Career | undefined;
-        let targetSubject: Subject | undefined;
-        
-        for (const career of careers) {
-            const foundSubject = career.subjects.find(s => s.name === subjectName);
-            if (foundSubject) {
-                targetCareer = career;
-                targetSubject = foundSubject;
-                break;
-            }
-        }
-
-        if (!targetCareer || !targetSubject) {
-            return [];
-        }
-
-        return students.filter(s => 
-            s.careers.includes(targetCareer!.name) && s.year === targetSubject!.year
-        );
+    updateUser: (updatedUser: User) => {
+        const index = users.findIndex(u => u.id === updatedUser.id);
+        if (index !== -1) users[index] = { ...users[index], ...updatedUser };
     },
-    getStudentAttendance: (studentId: string): AttendanceRecord[] => {
-        // If studentId is empty, return all records (for preceptor dashboard)
-        if (!studentId) return attendanceRecords;
-        return attendanceRecords.filter(a => a.studentId === studentId);
+    deleteUser: (userId: string) => {
+        users = users.filter(u => u.id !== userId);
     },
-    getMonthlyAttendanceForClass: (studentIds: string[], subject: string, year: number, month: number): AttendanceRecord[] => {
-        return attendanceRecords.filter(record => {
-            const recordDate = new Date(record.date + 'T00:00:00');
-            return (
-                studentIds.includes(record.studentId) &&
-                record.subject === subject &&
+
+    // Students
+    getStudentsByCareerAndYear: (careerName: string, year: number) => {
+        return students.filter(s => s.year === year && s.careers.includes(careerName));
+    },
+    getStudentsBySubject: (subjectName: string) => {
+        const subject = careers.flatMap(c => c.subjects).find(s => s.name === subjectName);
+        if (!subject) return [];
+        const career = careers.find(c => c.subjects.some(s => s.id === subject.id));
+        if (!career) return [];
+        return students.filter(s => s.year === subject.year && s.careers.includes(career.name));
+    },
+    getStudentsBySubjectId: (subjectId: string) => {
+        const subject = careers.flatMap(c => c.subjects).find(s => s.id === subjectId);
+        if (!subject) return [];
+        const career = careers.find(c => c.subjects.some(s => s.id === subject.id));
+        if (!career) return [];
+        return students.filter(s => s.year === subject.year && s.careers.includes(career.name));
+    },
+
+    // Attendance
+    getStudentAttendance: (studentId: string) => attendanceRecords.filter(r => r.studentId === studentId),
+    getMonthlyAttendanceForClass: (studentIds: string[], subject: string, year: number, month: number) => {
+        return attendanceRecords.filter(r => {
+            const recordDate = new Date(r.date + 'T00:00:00Z');
+            return studentIds.includes(r.studentId) &&
+                r.subject === subject &&
                 recordDate.getUTCFullYear() === year &&
-                recordDate.getUTCMonth() === month
-            );
+                recordDate.getUTCMonth() === month;
         });
-    },
-    getStudentsByCareerAndYear: (career: string, year: number): Student[] => {
-        return students.filter(s => s.careers.includes(career) && s.year === year);
     },
     saveAttendance: (records: { studentId: string, status: AttendanceStatus }[], subject: string, date: string) => {
         records.forEach(record => {
-            const newRecord: AttendanceRecord = {
-                id: `a${Date.now()}${Math.random()}`,
-                ...record,
-                subject,
-                date,
-            };
-            attendanceRecords.push(newRecord);
-        });
-    },
-    getNotifications: (): Notification[] => {
-        return notifications.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    },
-    addNotification: (notification: Omit<Notification, 'id' | 'date'>) => {
-        const newNotification: Notification = {
-            ...notification,
-            id: `n${Date.now()}`,
-            date: new Date().toISOString().split('T')[0]
-        };
-        notifications.unshift(newNotification);
-    },
-    getUserById: (userId: string): User | undefined => {
-        return users.find(u => u.id === userId);
-    },
-    getConversationDetails: (conversationId: string): Conversation | undefined => {
-        return conversations.find(c => c.id === conversationId);
-    },
-    getConversations: (userId: string): ConversationListItem[] => {
-        const userConversations = conversations.filter(c => c.participants.includes(userId));
-
-        const listItems = userConversations.map(convo => {
-            const lastMessage = messages
-                .filter(m => m.conversationId === convo.id)
-                .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
-
-            let name = 'Chat Grupal';
-            if (convo.isGroup) {
-                name = convo.name || 'Grupo sin nombre';
+            const existingIndex = attendanceRecords.findIndex(r => r.studentId === record.studentId && r.date === date && r.subject === subject);
+            if (existingIndex !== -1) {
+                attendanceRecords[existingIndex].status = record.status;
             } else {
-                const otherParticipantId = convo.participants.find(p => p !== userId);
-                const otherParticipant = users.find(u => u.id === otherParticipantId);
-                name = otherParticipant?.name || 'Usuario desconocido';
+                attendanceRecords.push({ id: `a${Date.now()}${Math.random()}`, studentId: record.studentId, date, subject, status: record.status });
             }
-
-            return {
-                id: convo.id,
-                name,
-                isGroup: convo.isGroup,
-                lastMessage,
-            };
-        });
-        
-        return listItems.sort((a, b) => {
-            if (!a.lastMessage) return 1;
-            if (!b.lastMessage) return -1;
-            return new Date(b.lastMessage.timestamp).getTime() - new Date(a.lastMessage.timestamp).getTime();
         });
     },
-    getMessages: (conversationId: string): Message[] => {
-        return messages
-            .filter(m => m.conversationId === conversationId)
-            .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-    },
-    sendMessage: (senderId: string, conversationId: string, text: string) => {
-        const newMessage: Message = {
-            id: `m${Date.now()}`,
-            senderId,
-            conversationId,
-            text,
-            timestamp: new Date().toISOString(),
-            readBy: [senderId],
-        };
-        messages.push(newMessage);
-        return newMessage;
-    },
-    getOrCreateConversation: (participant1Id: string, participant2Id: string): Conversation => {
-        const participantIds = [participant1Id, participant2Id].sort();
-        const existingConvo = conversations.find(c => 
-            !c.isGroup && 
-            c.participants.length === 2 &&
-            c.participants.slice().sort().join('-') === participantIds.join('-')
-        );
 
-        if (existingConvo) {
-            return existingConvo;
-        }
+    // Notifications
+    getNotifications: () => [...notifications].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    addNotification: (notification: Omit<Notification, 'id' | 'date'>) => {
+        const newNotif = { ...notification, id: `n${Date.now()}`, date: new Date().toISOString().split('T')[0] };
+        notifications.unshift(newNotif);
+    },
 
-        const newConvo: Conversation = {
-            id: participantIds.join('-'),
-            isGroup: false,
-            participants: participantIds
-        };
+    // Chat
+    getConversations: (userId: string): ConversationListItem[] => {
+        return conversations
+            .filter(c => c.participants.includes(userId))
+            .map(c => {
+                const lastMessage = messages
+                    .filter(m => m.conversationId === c.id)
+                    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+                
+                let name = c.name || '';
+                if (!c.isGroup) {
+                    const otherUserId = c.participants.find(p => p !== userId);
+                    const otherUser = users.find(u => u.id === otherUserId);
+                    name = otherUser?.name || 'Chat';
+                }
+
+                return { id: c.id, name, isGroup: c.isGroup, lastMessage };
+            })
+            .sort((a, b) => {
+                if (!a.lastMessage) return 1;
+                if (!b.lastMessage) return -1;
+                return new Date(b.lastMessage.timestamp).getTime() - new Date(a.lastMessage.timestamp).getTime();
+            });
+    },
+    getOrCreateConversation: (userId1: string, userId2: string) => {
+        const sortedIds = [userId1, userId2].sort();
+        const existing = conversations.find(c => !c.isGroup && c.participants.sort().join('-') === sortedIds.join('-'));
+        if (existing) return existing;
+        const newConvo = { id: sortedIds.join('-'), isGroup: false, participants: sortedIds };
         conversations.push(newConvo);
         return newConvo;
     },
     getOrCreateSubjectGroup: (subjectId: string, subjectName: string, professorId: string): Conversation => {
-        const conversationId = `group-subject-${subjectId}`;
-        const existingConvo = conversations.find(c => c.id === conversationId);
+        const groupId = `group-subject-${subjectId}`;
+        let group = conversations.find(c => c.id === groupId);
+        if (group) return group;
 
-        if (existingConvo) {
-            return existingConvo;
-        }
+        const studentsInSubject = mockApiService.getStudentsBySubjectId(subjectId);
+        const participantIds = [professorId, ...studentsInSubject.map(s => s.id)];
         
-        const subjectStudents = mockApiService.getStudentsBySubject(subjectName);
-        const studentIds = subjectStudents.map(s => s.id);
-        const professor = mockApiService.getUserById(professorId);
-
-        const newGroup: Conversation = {
-            id: conversationId,
-            isGroup: true,
-            name: `Grupo - ${subjectName}`,
-            participants: [...new Set([professorId, ...studentIds])],
-        };
-        conversations.push(newGroup);
-        
-        const creatorName = professor?.name || 'El profesor';
-        mockApiService.sendMessage('system', newGroup.id, `${creatorName} creó el grupo del curso "${subjectName}".`);
-        return newGroup;
+        group = { id: groupId, isGroup: true, name: `Grupo: ${subjectName}`, participants: participantIds };
+        conversations.push(group);
+        return group;
     },
-    createGroup: (groupName: string, participantIds: string[], creatorId: string): Conversation => {
-        const creator = mockApiService.getUserById(creatorId);
-        const finalParticipants = [...new Set([creatorId, ...participantIds])];
 
-        const newGroup: Conversation = {
-            id: `group-${Date.now()}`,
-            isGroup: true,
-            name: groupName,
-            participants: finalParticipants,
-        };
-        conversations.push(newGroup);
-        
-        const creatorName = creator?.name || 'Usuario';
-        mockApiService.sendMessage('system', newGroup.id, `${creatorName} creó el grupo "${groupName}".`);
-        return newGroup;
-    },
-    getOrCreatePreceptorsGroup: (creatorId: string): Conversation => {
-        const conversationId = 'group-all-preceptors';
-        const existingConvo = conversations.find(c => c.id === conversationId);
-
-        if (existingConvo) {
-            if (!existingConvo.participants.includes(creatorId)) {
-                existingConvo.participants.push(creatorId);
-            }
-            return existingConvo;
-        }
-
-        const preceptorIds = users.filter(u => u.role === UserRole.PRECEPTOR).map(p => p.id);
-        const creator = mockApiService.getUserById(creatorId);
-
-        const newGroup: Conversation = {
-            id: conversationId,
-            isGroup: true,
-            name: `Grupo de Preceptores`,
-            participants: [...new Set([...preceptorIds, creatorId])],
-        };
-        conversations.push(newGroup);
-        
-        const creatorName = creator?.name || 'Sistema';
-        mockApiService.sendMessage('system', newGroup.id, `${creatorName} inició el chat con el grupo de Preceptores.`);
-        return newGroup;
-    },
-    getOrCreateProfessorsGroup: (creatorId: string): Conversation => {
-        const conversationId = 'group-all-professors';
-        const existingConvo = conversations.find(c => c.id === conversationId);
-
-        if (existingConvo) {
-            if (!existingConvo.participants.includes(creatorId)) {
-                existingConvo.participants.push(creatorId);
-            }
-            return existingConvo;
-        }
-
-        const professorIds = users.filter(u => u.role === UserRole.PROFESSOR).map(p => p.id);
-        const creator = mockApiService.getUserById(creatorId);
-
-        const newGroup: Conversation = {
-            id: conversationId,
-            isGroup: true,
-            name: `Grupo de Profesores`,
-            participants: [...new Set([...professorIds, creatorId])],
-        };
-        conversations.push(newGroup);
-        
-        const creatorName = creator?.name || 'Sistema';
-        mockApiService.sendMessage('system', newGroup.id, `${creatorName} inició el chat con el grupo de Profesores.`);
-        return newGroup;
-    },
-    markMessagesAsRead: (readerId: string, conversationId: string) => {
-        messages.forEach(m => {
-            if (m.conversationId === conversationId && !m.readBy.includes(readerId)) {
-                m.readBy.push(readerId);
-            }
-        });
-    },
-    getCalendarEvents: (): CalendarEvent[] => {
-        return [...calendarEvents].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    },
+    // Calendar
+    getCalendarEvents: () => calendarEvents,
     addCalendarEvent: (event: Omit<CalendarEvent, 'id'>) => {
-        const newEvent: CalendarEvent = {
-            ...event,
-            id: `ce${Date.now()}`
-        };
+        const newEvent = { ...event, id: `ce${Date.now()}` };
         calendarEvents.push(newEvent);
     },
     updateCalendarEvent: (updatedEvent: CalendarEvent) => {
         const index = calendarEvents.findIndex(e => e.id === updatedEvent.id);
-        if (index !== -1) {
-            calendarEvents[index] = updatedEvent;
-        }
+        if (index !== -1) calendarEvents[index] = updatedEvent;
     },
     deleteCalendarEvent: (eventId: string) => {
         calendarEvents = calendarEvents.filter(e => e.id !== eventId);
     },
-    getNotes: (userId: string): Note[] => {
-        return notes.filter(n => n.userId === userId).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    },
-    addNote: (userId: string, text: string, date: string) => {
-        const newNote: Note = {
-            id: `note${Date.now()}`,
-            userId,
-            text,
-            date,
-            lastUpdated: new Date().toISOString()
-        };
-        notes.push(newNote);
-    },
-    updateNote: (noteId: string, text: string, date: string) => {
-        const index = notes.findIndex(n => n.id === noteId);
-        if (index !== -1) {
-            notes[index].text = text;
-            notes[index].date = date;
-            notes[index].lastUpdated = new Date().toISOString();
-        }
-    },
-    deleteNote: (noteId: string) => {
-        notes = notes.filter(n => n.id !== noteId);
-    },
-    getSuggestionsComplaints: (): SuggestionComplaint[] => {
-        return [...suggestionsComplaints].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    },
-    addSuggestionComplaint: (data: { userId: string, type: SuggestionComplaintType, text: string }) => {
-        const newEntry: SuggestionComplaint = {
-            id: `sc${Date.now()}`,
-            userId: data.userId,
-            type: data.type,
-            text: data.text,
-            date: new Date().toISOString().split('T')[0],
-            status: SuggestionComplaintStatus.NEW,
-        };
-        suggestionsComplaints.unshift(newEntry);
+    
+    // Suggestions
+    getSuggestionsComplaints: () => suggestionsComplaints,
+    addSuggestionComplaint: (s: { userId: string, type: SuggestionComplaintType, text: string }) => {
+        const newSuggestion = { ...s, id: `sc${Date.now()}`, date: new Date().toISOString().split('T')[0], status: SuggestionComplaintStatus.NEW };
+        suggestionsComplaints.unshift(newSuggestion);
     },
     updateSuggestionComplaintStatus: (id: string, status: SuggestionComplaintStatus) => {
-        const index = suggestionsComplaints.findIndex(sc => sc.id === id);
-        if (index !== -1) {
-            suggestionsComplaints[index].status = status;
-        }
+        const suggestion = suggestionsComplaints.find(s => s.id === id);
+        if (suggestion) suggestion.status = status;
     },
-    // --- NEW FUNCTIONS FOR GRADES ---
-    getGradesForStudent: (studentId: string): Grade[] => {
-        return grades.filter(g => g.studentId === studentId);
-    },
-    getGradesBySubject: (subjectId: string): Grade[] => {
-        return grades.filter(g => g.subjectId === subjectId);
-    },
-    addOrUpdateGrade: (grade: Omit<Grade, 'id'> & { id?: string }): void => {
-        const existingIndex = grade.id ? grades.findIndex(g => g.id === grade.id) : -1;
-        if (existingIndex !== -1) {
-            grades[existingIndex] = { ...grades[existingIndex], ...grade };
+
+    // Grades
+    getGradesForStudent: (studentId: string) => grades.filter(g => g.studentId === studentId),
+    getGradesBySubject: (subjectId: string) => grades.filter(g => g.subjectId === subjectId),
+    addOrUpdateGrade: (grade: Partial<Grade>) => {
+        if (grade.id) {
+            const index = grades.findIndex(g => g.id === grade.id);
+            if (index !== -1) grades[index] = { ...grades[index], ...grade };
         } else {
-            const newGrade: Grade = {
-                id: `grd${Date.now()}`,
-                ...grade
-            };
-            grades.push(newGrade);
+            grades.push({ id: `grd${Date.now()}`, ...grade } as Grade);
         }
     },
-    // --- NEW FUNCTIONS FOR FINALS ---
-    getFinalsByProfessor: (professorId: string): FinalExam[] => {
-        return finalExams.filter(f => f.professorId === professorId);
-    },
-    createFinal: (finalData: Omit<FinalExam, 'id'>): void => {
-        const newFinal: FinalExam = {
-            id: `fin${Date.now()}`,
-            ...finalData
-        };
+
+    // Finals
+    getFinalsByProfessor: (professorId: string) => finalExams.filter(f => f.professorId === professorId),
+    createFinal: (finalData: Omit<FinalExam, 'id'>) => {
+        const newFinal = { ...finalData, id: `fin${Date.now()}` };
         finalExams.push(newFinal);
     },
-    deleteFinal: (finalId: string): void => {
+    deleteFinal: (finalId: string) => {
         finalExams = finalExams.filter(f => f.id !== finalId);
-        // Also remove enrollments for this final
         finalEnrollments = finalEnrollments.filter(e => e.finalId !== finalId);
     },
-    getAvailableFinalsForStudent: (student: Student): FinalExam[] => {
-        // Find subjects the student could take based on career and year
+    getAvailableFinalsForStudent: (student: Student) => {
         const studentSubjectIds = careers
             .filter(c => student.careers.includes(c.name))
             .flatMap(c => c.subjects)
-            .filter(s => s.year <= student.year) // Can take finals from current or previous years
+            .filter(s => s.year <= student.year)
             .map(s => s.id);
-
-        const enrolledFinalIds = finalEnrollments
-            .filter(e => e.studentId === student.id)
-            .map(e => e.finalId);
-
-        return finalExams.filter(f => 
-            studentSubjectIds.includes(f.subjectId) && 
-            !enrolledFinalIds.includes(f.id)
-        );
+        const enrolledIds = new Set(finalEnrollments.filter(e => e.studentId === student.id).map(e => e.finalId));
+        return finalExams.filter(f => studentSubjectIds.includes(f.subjectId) && !enrolledIds.has(f.id));
     },
-    getStudentEnrollments: (studentId: string): FinalExam[] => {
-        const enrolledFinalIds = finalEnrollments
-            .filter(e => e.studentId === studentId)
-            .map(e => e.finalId);
-        return finalExams.filter(f => enrolledFinalIds.includes(f.id));
+    getStudentEnrollments: (studentId: string) => {
+        const enrolledIds = new Set(finalEnrollments.filter(e => e.studentId === studentId).map(e => e.finalId));
+        return finalExams.filter(f => enrolledIds.has(f.id));
     },
-    enrollInFinal: (studentId: string, finalId: string): boolean => {
-        const final = finalExams.find(f => f.id === finalId);
-        if (!final) return false;
-
-        const currentEnrollments = finalEnrollments.filter(e => e.finalId === finalId).length;
-        if (currentEnrollments >= final.capacity) {
-            alert('No hay más cupos para este final.');
-            return false;
-        }
-
-        const isAlreadyEnrolled = finalEnrollments.some(e => e.studentId === studentId && e.finalId === finalId);
-        if (isAlreadyEnrolled) return false;
-
+    enrollInFinal: (studentId: string, finalId: string) => {
+        const alreadyEnrolled = finalEnrollments.some(e => e.studentId === studentId && e.finalId === finalId);
+        if (alreadyEnrolled) return false;
         finalEnrollments.push({ studentId, finalId });
         return true;
     },
-    withdrawFromFinal: (studentId: string, finalId: string): void => {
+    withdrawFromFinal: (studentId: string, finalId: string) => {
         finalEnrollments = finalEnrollments.filter(e => !(e.studentId === studentId && e.finalId === finalId));
     },
-    getEnrolledStudentsForFinal: (finalId: string): Student[] => {
-        const studentIds = finalEnrollments.filter(e => e.finalId === finalId).map(e => e.studentId);
-        return students.filter(s => studentIds.includes(s.id));
-    },
+    getEnrolledStudentsForFinal: (finalId: string) => {
+        const studentIds = new Set(finalEnrollments.filter(e => e.finalId === finalId).map(e => e.studentId));
+        return students.filter(s => studentIds.has(s.id));
+    }
 };

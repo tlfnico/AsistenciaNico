@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import Card from '../../components/common/Card';
 import UpcomingEventsCard from '../../components/dashboard/UpcomingEventsCard';
 import PersonalTasksCard from '../../components/dashboard/PersonalTasksCard';
 import { CalendarEvent, CalendarEventType } from '../../types';
-import { mockApiService } from '../../services/mockData';
+import * as api from '../../services/api';
 import Icon, { IconName } from '../../components/common/Icon';
 
 const getEventTypeStyles = (type: CalendarEventType) => {
@@ -20,7 +20,23 @@ const getEventTypeStyles = (type: CalendarEventType) => {
 const InteractiveCalendar: React.FC = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState(new Date());
-    const [events, setEvents] = useState(() => mockApiService.getCalendarEvents());
+    const [events, setEvents] = useState<CalendarEvent[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchEvents = async () => {
+            setLoading(true);
+            try {
+                const data = await api.getCalendarEvents();
+                setEvents(data);
+            } catch (error) {
+                console.error("Failed to fetch calendar events:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchEvents();
+    }, []);
 
     const eventsByDate = useMemo(() => {
         return events.reduce((acc, event) => {
@@ -46,6 +62,10 @@ const InteractiveCalendar: React.FC = () => {
     const selectedDateString = selectedDate.toISOString().split('T')[0];
     const eventsForSelectedDate = eventsByDate[selectedDateString] || [];
     
+    if (loading) {
+        return <Card><p>Cargando calendario...</p></Card>
+    }
+
     return (
         <Card>
             <div className="flex justify-between items-center mb-4">
